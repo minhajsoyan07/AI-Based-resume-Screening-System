@@ -1,0 +1,36 @@
+## Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+## Visual Studio & JetBrains & VSCode
+.vs/
+.vscode/
+*.user
+*.userosscache
+*.sln.docstates
+*.suo
+
+## Antigravity / AI Agent temporary dirs
+.antigravitycli/
+
+## User-specific configuration & secrets
+appsettings.Development.json
+appsettings.*.local.json
+
+## Uploaded files (exclude individual user uploads, preserve directory structure)
+wwwroot/uploads/resumes/*
+!wwwroot/uploads/resumes/.gitkeep
+wwwroot/uploads/jobs/*
+!wwwroot/uploads/jobs/.gitkeep
+!wwwroot/uploads/jobs/sample_circular.pdf

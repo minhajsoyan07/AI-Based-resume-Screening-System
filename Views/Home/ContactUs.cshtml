@@ -1,0 +1,292 @@
+@{
+    ViewData["Title"] = "Contact Us | ResuMatch Intelligence";
+}
+
+<style>
+    .contact-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 3rem 1.5rem;
+        animation: fadeIn 0.4s ease-out;
+    }
+
+    .contact-header {
+        text-align: center;
+        margin-bottom: 4rem;
+    }
+
+    .contact-title {
+        font-size: 2.25rem;
+        font-weight: 800;
+        color: var(--brand-dark);
+        margin-bottom: 0.75rem;
+        letter-spacing: -0.02em;
+    }
+
+    .contact-subtitle {
+        font-size: 1.05rem;
+        color: var(--text-muted);
+        max-width: 600px;
+        margin: 0 auto;
+        line-height: 1.5;
+    }
+
+    /* Grid Layout */
+    .contact-grid {
+        display: grid;
+        grid-template-columns: 1.1fr 0.9fr;
+        gap: 3rem;
+        align-items: start;
+        margin-bottom: 5rem;
+    }
+
+    /* Form Panel */
+    .form-panel {
+        background: var(--bg-white);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        padding: 2.5rem;
+    }
+
+    .form-title {
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: var(--brand-dark);
+        margin-bottom: 0.5rem;
+    }
+
+    .form-desc {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+        margin-bottom: 2rem;
+    }
+
+    .field-group {
+        margin-bottom: 1.25rem;
+    }
+
+    .field-label {
+        display: block;
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: var(--text-muted);
+        margin-bottom: 0.5rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .input-control {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        background: var(--bg-main);
+        color: var(--text-main);
+        outline: none;
+        transition: all var(--transition-fast);
+    }
+
+    .input-control:focus {
+        background: white;
+        border-color: var(--brand-primary);
+    }
+
+    .btn-submit {
+        background: var(--brand-primary);
+        color: white;
+        border: none;
+        padding: 0.85rem 1.5rem;
+        font-size: 0.85rem;
+        font-weight: 700;
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        width: 100%;
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+        transition: background var(--transition-fast);
+    }
+
+    .btn-submit:hover {
+        background: var(--brand-dark);
+    }
+
+    /* Details Panel */
+    .details-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+    }
+
+    .info-card {
+        background: var(--bg-white);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        padding: 1.5rem;
+    }
+
+    .info-title {
+        font-size: 0.95rem;
+        font-weight: 800;
+        color: var(--brand-dark);
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .info-text {
+        font-size: 0.88rem;
+        color: var(--text-muted);
+        line-height: 1.5;
+    }
+
+    .info-text a {
+        color: var(--brand-primary);
+        font-weight: 600;
+    }
+
+    /* Tidy FAQs */
+    .faq-panel {
+        background: var(--bg-white);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        padding: 2.5rem;
+    }
+
+    .faq-title {
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: var(--brand-dark);
+        margin-bottom: 1.5rem;
+        text-align: center;
+    }
+
+    .faq-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 2rem;
+    }
+
+    .faq-item h3 {
+        font-size: 0.98rem;
+        font-weight: 800;
+        color: var(--text-main);
+        margin-bottom: 0.5rem;
+    }
+
+    .faq-item p {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        line-height: 1.4;
+    }
+
+    @@media (max-width: 768px) {
+        .contact-grid { grid-template-columns: 1fr; }
+        .faq-grid { grid-template-columns: 1fr; }
+    }
+</style>
+
+<div class="contact-container">
+    
+    <!-- Clean Header -->
+    <header class="contact-header">
+        <h1 class="contact-title">Contact Us</h1>
+        <p class="contact-subtitle">
+            Get in touch with our operations or technical team for billing inquiries, API integrations, and customized workflows.
+        </p>
+    </header>
+
+    <!-- Content Grid -->
+    <div class="contact-grid">
+        
+        <!-- Form Section -->
+        <section class="form-panel">
+            <h2 class="form-title">Send a Message</h2>
+            <p class="form-desc">Fill in the fields below and we will contact you within 24 hours.</p>
+
+            <form onsubmit="event.preventDefault(); alert('Message sent successfully!'); this.reset();">
+                <div class="field-group">
+                    <label class="field-label">Name</label>
+                    <input type="text" class="input-control" required placeholder="John Doe">
+                </div>
+
+                <div class="field-group">
+                    <label class="field-label">Work Email</label>
+                    <input type="email" class="input-control" required placeholder="john@company.com">
+                </div>
+
+                <div class="field-group">
+                    <label class="field-label">Topic</label>
+                    <select class="input-control" style="appearance: none;">
+                        <option>General Support</option>
+                        <option>Billing & Credits</option>
+                        <option>Enterprise Integration</option>
+                    </select>
+                </div>
+
+                <div class="field-group">
+                    <label class="field-label">Message Details</label>
+                    <textarea class="input-control" rows="4" required placeholder="Describe your request..."></textarea>
+                </div>
+
+                <button type="submit" class="btn-submit">Submit Inquiry</button>
+            </form>
+        </section>
+
+        <!-- Directory Section -->
+        <section class="details-panel">
+            
+            <div class="info-card">
+                <div class="info-title">📍 Head Office</div>
+                <div class="info-text">
+                    ResuMatch Intelligence Ltd.<br>
+                    Plot 14, Road 2, Block D<br>
+                    Banani, Dhaka - 1213
+                </div>
+            </div>
+
+            <div class="info-card">
+                <div class="info-title">✉️ Support Desk</div>
+                <div class="info-text">
+                    Email: <a href="mailto:support@resumatch.ai">support@resumatch.ai</a>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <div class="info-title">📞 Inquiry Line</div>
+                <div class="info-text">
+                    Phone: <a href="tel:+8802999888">+880 (2) 999-888</a><br>
+                    Hours: Sun – Thu, 9 AM – 6 PM
+                </div>
+            </div>
+
+        </section>
+
+    </div>
+
+    <!-- Tidy FAQs -->
+    <section class="faq-panel">
+        <h2 class="faq-title">Common Inquiries</h2>
+        
+        <div class="faq-grid">
+            <div class="faq-item">
+                <h3>What files are supported?</h3>
+                <p>You can upload PDF, Word (DOCX/DOC), and structured plain text files directly.</p>
+            </div>
+            <div class="faq-item">
+                <h3>What are AI screening credits?</h3>
+                <p>Credits allow candidates to request deep matching diagnostics and score evaluations against jobs.</p>
+            </div>
+            <div class="faq-item">
+                <h3>Can I request customized filters?</h3>
+                <p>Yes. Enterprise plans allow managers to calibrate exact search multipliers and custom keyword weights.</p>
+            </div>
+            <div class="faq-item">
+                <h3>Is candidate data secure?</h3>
+                <p>Absolutely. All documents and profile indices are stored using bank-grade transit and storage encryption.</p>
+            </div>
+        </div>
+    </section>
+
+</div>

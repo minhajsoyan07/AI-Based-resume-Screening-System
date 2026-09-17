@@ -1,0 +1,399 @@
+@model AIResumeScreeningSystem.DTOs.CompanySetupDTO
+@{
+    ViewData["Title"] = "Organization Profile";
+    Layout = "~/Views/Shared/_RecruiterLayout.cshtml";
+    var logo = ViewBag.LogoPath as string;
+    var cover = ViewBag.CoverPath as string;
+    var signature = ViewBag.SignaturePath as string;
+}
+
+<style>
+    .profile-container {
+        max-width: 1000px;
+        margin: 0 auto;
+    }
+
+    .profile-hero {
+        position: relative;
+        height: 200px;
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        margin-bottom: 5rem;
+        background: var(--brand-dark);
+        box-shadow:none;
+    }
+
+    .profile-cover {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        opacity: 0.7;
+    }
+
+    .profile-avatar-wrapper {
+        position: absolute;
+        bottom: -40px;
+        left: 2rem;
+        display: flex;
+        align-items: flex-end;
+        gap: 1.5rem;
+    }
+
+    .profile-avatar {
+        width: 120px;
+        height: 120px;
+        border-radius: var(--radius-lg);
+        background: white;
+        padding: 0.5rem;
+        box-shadow:none;
+        border: 4px solid white;
+    }
+
+    .profile-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        border-radius: var(--radius-md);
+    }
+
+    .profile-title-area {
+        padding-bottom: 0.5rem;
+    }
+
+    .profile-title-area h1 {
+        margin: 0;
+        font-size: 1.75rem;
+        font-weight: 800;
+        color: var(--text-main);
+    }
+
+    .profile-title-area p {
+        margin: 0;
+        color: var(--text-muted);
+        font-size: 1rem;
+    }
+
+    .setup-section {
+        background: white;
+        border-radius: var(--radius-lg);
+        box-shadow:none;
+        border: 1px solid var(--border-color);
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .section-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--brand-dark);
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid var(--bg-gray);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .form-group.full {
+        grid-column: 1 / -1;
+    }
+
+    .file-upload-box {
+        border: 2px dashed var(--border-color);
+        border-radius: var(--radius-md);
+        padding: 1.5rem;
+        text-align: center;
+        background: var(--bg-gray);
+        cursor: pointer;
+        transition: all var(--transition-fast);
+        position: relative;
+    }
+
+    .file-upload-box:hover {
+        border-color: var(--brand-primary);
+        background: var(--bg-main);
+    }
+
+    .file-upload-box input[type="file"] {
+        position: absolute;
+        top: 0; right: 0; bottom: 0; left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        cursor: pointer;
+    }
+
+    .btn-save {
+        background: var(--brand-primary);
+        color: white;
+        font-weight: 700;
+        padding: 1rem 2.5rem;
+        font-size: 1.1rem;
+        border: none;
+        border-radius: var(--radius-md);
+        box-shadow:none;
+        cursor: pointer;
+        transition: all var(--transition-smooth);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+    }
+
+    .btn-save:hover {
+        transform:none;
+        background: var(--brand-dark);
+        box-shadow:none;
+    }
+
+    .current-file-preview {
+        margin-top: 0.5rem;
+        font-size: 0.75rem;
+        color: var(--brand-primary);
+        font-weight: 600;
+    }
+</style>
+
+<div class="profile-container">
+    <!-- Hero (Cover & Logo) -->
+    <div class="profile-hero">
+        <img src="@(string.IsNullOrEmpty(cover) ? "/images/login-wave-bg.png" : cover)" class="profile-cover" />
+        <div class="profile-avatar-wrapper">
+            <div class="profile-avatar">
+                <img src="@(string.IsNullOrEmpty(logo) ? "/images/logo-placeholder.png" : logo)" alt="Company Logo" />
+            </div>
+            <div class="profile-title-area">
+                <h1>@Model.CompanyName</h1>
+                <p>@Model.IndustryType | @Model.CompanySize</p>
+            </div>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert" style="background:#f0fdf4; color:#16a34a; padding:1rem; border-radius:2px; margin-bottom:1.5rem; border:1px solid #bbf7d0; display:flex; align-items:center; gap:0.75rem;">
+            <span>✅</span> @TempData["Success"]
+        </div>
+    }
+
+    <form asp-action="Profile" method="post" enctype="multipart/form-data">
+        @Html.AntiForgeryToken()
+        
+        <!-- Organization Info -->
+        <div class="setup-section">
+            <h2 class="section-title">🏢 Organization Info</h2>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Name of the organization <span class="text-danger">*</span></label>
+                    <input asp-for="CompanyName" class="r-form-control" placeholder="Enter your organization name" required />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Name of the organization (Bangla)</label>
+                    <input asp-for="CompanyNameBangla" class="r-form-control" placeholder="Enter your organization name (Bangla)" />
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Organization category <span class="text-danger">*</span></label>
+                    <select asp-for="OrganizationCategory" class="r-form-control" required>
+                        <option value="">Select your organization category</option>
+                        <option value="Government">Government</option>
+                        <option value="Semi Government">Semi Government</option>
+                        <option value="Private Firm">Private Firm</option>
+                        <option value="NGO">NGO</option>
+                        <option value="International Agencies">International Agencies</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Industry Type <span class="text-danger">*</span></label>
+                    <input asp-for="IndustryType" class="r-form-control" placeholder="Enter your industry type" required />
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Website address</label>
+                    <input asp-for="CompanyWebsite" class="r-form-control" placeholder="https://www.example.com" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Organization Email <span class="text-danger">*</span></label>
+                    <input asp-for="OrganizationEmail" type="email" class="r-form-control" placeholder="Enter your organization email" required />
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group full">
+                    <label class="form-label">Organization tags</label>
+                    <input asp-for="Tags" class="r-form-control" placeholder="IT, Software, Startup" />
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group full">
+                    <label class="form-label">Organization tagline</label>
+                    <input asp-for="Tagline" class="r-form-control" placeholder="Enter your organization tagline" />
+                </div>
+            </div>
+
+            <!-- Uploads -->
+            <div class="form-row" style="grid-template-columns: 1fr 1fr 1fr; margin-top:2rem;">
+                <div class="form-group">
+                    <label class="form-label">Update Logo</label>
+                    <div class="file-upload-box">
+                        <input asp-for="LogoFile" type="file" accept="image/*" />
+                        <div class="file-icon">🖼️</div>
+                        <div style="font-weight:600; font-size:0.875rem;">Change Logo</div>
+                    </div>
+                    @if (!string.IsNullOrEmpty(logo)) {
+                        <div class="current-file-preview">Active: @logo.Split('/').Last()</div>
+                    }
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Update Cover</label>
+                    <div class="file-upload-box">
+                        <input asp-for="CoverPhotoFile" type="file" accept="image/*" />
+                        <div class="file-icon">🌌</div>
+                        <div style="font-weight:600; font-size:0.875rem;">Change Cover</div>
+                    </div>
+                    @if (!string.IsNullOrEmpty(cover)) {
+                        <div class="current-file-preview">Active: @cover.Split('/').Last()</div>
+                    }
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Update Signature</label>
+                    <div class="file-upload-box">
+                        <input asp-for="SignatureFile" type="file" accept="image/*" />
+                        <div class="file-icon">✍️</div>
+                        <div style="font-weight:600; font-size:0.875rem;">Change Signature</div>
+                    </div>
+                    @if (!string.IsNullOrEmpty(signature)) {
+                        <div class="current-file-preview">Active: @signature.Split('/').Last()</div>
+                    }
+                </div>
+            </div>
+
+            <div class="form-row" style="margin-top:1.5rem;">
+                <div class="form-group">
+                    <label class="form-label">Establishment year</label>
+                    <input asp-for="EstablishmentYear" type="number" class="r-form-control" placeholder="e.g. 2010" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Organization size</label>
+                    <select asp-for="CompanySize" class="r-form-control">
+                        <option value="">Select size</option>
+                        <option value="1-15">1-15 Employees</option>
+                        <option value="16-50">16-50 Employees</option>
+                        <option value="51-200">51-200 Employees</option>
+                        <option value="201-500">201-500 Employees</option>
+                        <option value="500+">500+ Employees</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group full">
+                <label class="form-label">About Organization</label>
+                <textarea asp-for="AboutOrganization" class="r-form-control" rows="4" placeholder="Enter details about your organization"></textarea>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group full">
+                    <label class="form-label">Vision of the organization</label>
+                    <textarea asp-for="Vision" class="r-form-control" rows="3" placeholder="Enter vision of the organization"></textarea>
+                </div>
+                <div class="form-group full">
+                    <label class="form-label">Mission of the organization</label>
+                    <textarea asp-for="Mission" class="r-form-control" rows="3" placeholder="Enter mission of the organization"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Address & Contact Info -->
+        <div class="setup-section">
+            <h2 class="section-title">📍 Address & Contact Details</h2>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Division</label>
+                    <select asp-for="Division" class="r-form-control">
+                        <option value="">Select division</option>
+                        <option value="Dhaka">Dhaka</option>
+                        <option value="Chattogram">Chattogram</option>
+                        <option value="Sylhet">Sylhet</option>
+                        <option value="Rajshahi">Rajshahi</option>
+                        <option value="Khulna">Khulna</option>
+                        <option value="Barishal">Barishal</option>
+                        <option value="Rangpur">Rangpur</option>
+                        <option value="Mymensingh">Mymensingh</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">District</label>
+                    <input asp-for="District" class="r-form-control" placeholder="Enter district" />
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Thana/Upazila</label>
+                    <input asp-for="Thana" class="r-form-control" placeholder="Enter thana" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Postal code</label>
+                    <input asp-for="PostalCode" class="r-form-control" placeholder="Enter postal code" />
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group full">
+                    <label class="form-label">Organization full address</label>
+                    <input asp-for="FullAddress" class="r-form-control" placeholder="Enter your organization full address" />
+                </div>
+                <div class="form-group full">
+                    <label class="form-label">Organization full address in Bangla</label>
+                    <input asp-for="FullAddressBangla" class="r-form-control" placeholder="Enter your organization full address in bangla" />
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Organization mobile number</label>
+                    <input asp-for="MobileNumber" class="r-form-control" placeholder="Enter mobile number" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Organization land phone number</label>
+                    <input asp-for="LandPhoneNumber" class="r-form-control" placeholder="Enter land phone number" />
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-top: 2rem;">
+            <button type="submit" class="btn-save">💾 UPDATE ORGANIZATION PROFILE</button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('.file-upload-box input[type="file"]').forEach(input => {
+            input.addEventListener('change', function(e) {
+                const label = this.parentElement.querySelector('div:last-child');
+                if (this.files && this.files.length > 0) {
+                    label.textContent = this.files[0].name;
+                    label.style.color = 'var(--brand-primary)';
+                } else {
+                    label.textContent = 'Change File';
+                    label.style.color = 'inherit';
+                }
+            });
+        });
+    </script>
+}

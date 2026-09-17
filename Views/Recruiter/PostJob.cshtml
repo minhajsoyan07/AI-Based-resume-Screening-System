@@ -1,0 +1,723 @@
+@model AIResumeScreeningSystem.DTOs.JobCreateDTO
+@{ 
+    ViewData["Title"] = "Post New Job";
+    Layout = "~/Views/Shared/_RecruiterLayout.cshtml";
+}
+
+<style>
+    /* ════════════════════════════════════════════════════════════════════════════════════
+       POST JOB PAGE: PROFESSIONAL DESIGN SYSTEM
+       ════════════════════════════════════════════════════════════════════════════════════ */
+
+    .job-post-wrapper {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 0;
+    }
+
+    /* Header Section */
+    .job-post-header {
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        color: white;
+        padding: 2.5rem 2rem;
+        border-radius: 12px 12px 0 0;
+        margin-bottom: 0;
+    }
+
+    .job-post-header h1 {
+        font-size: 1.875rem;
+        font-weight: 700;
+        color: white;
+        margin: 0 0 0.5rem 0;
+    }
+
+    .job-post-header p {
+        font-size: 1rem;
+        color: rgba(255, 255, 255, 0.9);
+        margin: 0;
+    }
+
+    /* Progress Steps */
+    .progress-steps {
+        display: flex;
+        background: white;
+        padding: 2rem;
+        border-bottom: 1px solid #e5e7eb;
+        gap: 1rem;
+    }
+
+    .progress-step {
+        flex: 1;
+        text-align: center;
+        position: relative;
+    }
+
+    .progress-step::after {
+        content: '';
+        position: absolute;
+        top: 20px;
+        left: 50%;
+        right: -50%;
+        height: 2px;
+        background: #e5e7eb;
+        z-index: 0;
+    }
+
+    .progress-step:last-child::after {
+        display: none;
+    }
+
+    .progress-step.active::after {
+        background: #2563eb;
+    }
+
+    .progress-circle {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: #e5e7eb;
+        color: #6b7280;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        margin: 0 auto 0.5rem;
+        font-size: 0.875rem;
+        position: relative;
+        z-index: 1;
+        transition: all 0.3s ease;
+    }
+
+    .progress-step.active .progress-circle {
+        background: #2563eb;
+        color: white;
+        transform: scale(1.1);
+    }
+
+    .progress-step.completed .progress-circle {
+        background: #10b981;
+        color: white;
+    }
+
+    .progress-label {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #6b7280;
+    }
+
+    .progress-step.active .progress-label {
+        color: #2563eb;
+        font-weight: 600;
+    }
+
+    /* Success & Error Alerts */
+    .alert-banner {
+        padding: 1.25rem 1.5rem;
+        border-radius: 8px;
+        margin-bottom: 2rem;
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        animation: slideDown 0.3s ease-out;
+    }
+
+    .alert-banner.success {
+        background: #ecfdf5;
+        border: 1px solid #d1fae5;
+        color: #065f46;
+    }
+
+    .alert-banner.error {
+        background: #fef2f2;
+        border: 1px solid #fee2e2;
+        color: #7f1d1d;
+    }
+
+    .alert-icon {
+        flex-shrink: 0;
+        font-size: 1.25rem;
+    }
+
+    .alert-content h4 {
+        margin: 0 0 0.25rem 0;
+        font-size: 0.95rem;
+        color: inherit;
+    }
+
+    .alert-content p {
+        margin: 0;
+        font-size: 0.875rem;
+        opacity: 0.9;
+    }
+
+    @@keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Form Container */
+    .form-container {
+        background: white;
+        padding: 2rem;
+    }
+
+    /* Form Section */
+    .form-section {
+        margin-bottom: 2.5rem;
+    }
+
+    .form-section:last-child {
+        margin-bottom: 0;
+    }
+
+    .form-section-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #f3f4f6;
+    }
+
+    .form-section-icon {
+        font-size: 1.5rem;
+    }
+
+    .form-section-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: #1f2937;
+        margin: 0;
+    }
+
+    /* Form Group */
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group label {
+        display: block;
+        font-size: 0.95rem;
+        font-weight: 500;
+        color: #374151;
+        margin-bottom: 0.5rem;
+    }
+
+    .form-group label .required {
+        color: #dc2626;
+        margin-left: 0.25rem;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        font-size: 0.95rem;
+        font-family: inherit;
+        transition: all 0.2s ease;
+        background: white;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+        outline: none;
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    .form-group textarea {
+        resize: vertical;
+        min-height: 150px;
+        font-size: 0.9rem;
+        line-height: 1.6;
+    }
+
+    .form-helper-text {
+        font-size: 0.8rem;
+        color: #6b7280;
+        margin-top: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .validation-error {
+        color: #dc2626;
+        font-size: 0.875rem;
+        margin-top: 0.5rem;
+        display: block;
+    }
+
+    /* Form Grid */
+    .form-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .form-row.full {
+        grid-template-columns: 1fr;
+    }
+
+    .form-row.half {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .form-row.thirds {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    @@media (max-width: 768px) {
+        .form-row.half,
+        .form-row.thirds {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* File Upload Section */
+    .file-upload-area {
+        border: 2px dashed #bfdbfe;
+        border-radius: 8px;
+        padding: 2rem;
+        text-align: center;
+        background: #f0f9ff;
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+
+    .file-upload-area:hover {
+        border-color: #2563eb;
+        background: #eff6ff;
+    }
+
+    .file-upload-area.dragover {
+        border-color: #2563eb;
+        background: #eff6ff;
+    }
+
+    .file-upload-icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .file-upload-text {
+        font-size: 0.95rem;
+        color: #1f2937;
+        margin-bottom: 0.25rem;
+    }
+
+    .file-upload-hint {
+        font-size: 0.8rem;
+        color: #6b7280;
+        margin: 0;
+    }
+
+    .file-upload-area input[type="file"] {
+        display: none;
+    }
+
+    /* Button Section */
+    .button-group {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2.5rem;
+        padding-top: 2rem;
+        border-top: 1px solid #e5e7eb;
+        justify-content: flex-end;
+    }
+
+    .btn {
+        padding: 0.875rem 2rem;
+        border-radius: 6px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    }
+
+    .btn-primary:active {
+        transform: translateY(0);
+    }
+
+    .btn-secondary {
+        background: white;
+        color: #6b7280;
+        border: 1px solid #d1d5db;
+    }
+
+    .btn-secondary:hover {
+        background: #f9fafb;
+        color: #374151;
+        border-color: #9ca3af;
+    }
+
+    /* Tips & Info */
+    .info-box {
+        background: #f0f9ff;
+        border-left: 3px solid #2563eb;
+        padding: 1rem;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        color: #1e3a8a;
+        margin-top: 1rem;
+    }
+
+    .info-box strong {
+        color: #1e40af;
+    }
+
+    /* Responsive */
+    @@media (max-width: 768px) {
+        .job-post-header {
+            padding: 1.5rem;
+        }
+
+        .job-post-header h1 {
+            font-size: 1.5rem;
+        }
+
+        .progress-steps {
+            padding: 1.5rem 1rem;
+        }
+
+        .form-container {
+            padding: 1.5rem;
+        }
+
+        .button-group {
+            flex-direction: column;
+        }
+
+        .btn {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+
+<div class="job-post-wrapper">
+    <!-- Header -->
+    <div class="job-post-header">
+        <h1>Post a New Job Opening</h1>
+        <p>Fill in the details below to create and post your job listing</p>
+    </div>
+
+    <!-- Progress Steps -->
+    <div class="progress-steps">
+        <div class="progress-step active">
+            <div class="progress-circle">1</div>
+            <div class="progress-label">Job Details</div>
+        </div>
+        <div class="progress-step">
+            <div class="progress-circle">2</div>
+            <div class="progress-label">Requirements</div>
+        </div>
+        <div class="progress-step">
+            <div class="progress-circle">3</div>
+            <div class="progress-label">Review</div>
+        </div>
+    </div>
+
+    <!-- Form Container -->
+    <div class="form-container">
+        <!-- Success Alert -->
+        @if (!string.IsNullOrEmpty(TempData["Success"]?.ToString()))
+        {
+            <div class="alert-banner success">
+                <div class="alert-icon">✓</div>
+                <div class="alert-content">
+                    <h4>Job Posted Successfully!</h4>
+                    <p>@TempData["Success"]</p>
+                </div>
+            </div>
+        }
+
+        <!-- Error Alert -->
+        @if (!string.IsNullOrEmpty(TempData["Error"]?.ToString()))
+        {
+            <div class="alert-banner error">
+                <div class="alert-icon">⚠</div>
+                <div class="alert-content">
+                    <h4>Error</h4>
+                    <p>@TempData["Error"]</p>
+                </div>
+            </div>
+        }
+
+        <form method="post" asp-action="PostJob" asp-controller="Recruiter" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
+
+            <!-- Section 1: Primary Job Information -->
+            <div class="form-section">
+                <div class="form-section-header">
+                    <span class="form-section-icon">📋</span>
+                    <h2 class="form-section-title">Job Details</h2>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>
+                            Job Title <span class="required">*</span>
+                        </label>
+                        <input asp-for="JobTitle" class="form-control" placeholder="e.g., Senior Software Engineer" required />
+                        <span asp-validation-for="JobTitle" class="validation-error"></span>
+                    </div>
+                    <div class="form-group">
+                        <label>Job Title (Bangla)</label>
+                        <input type="text" name="JobTitleBangla" class="form-control" placeholder="বাংলায় শিরোনাম" />
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>
+                            Number of Vacancies <span class="required">*</span>
+                        </label>
+                        <input type="number" name="NumberOfVacancies" min="1" class="form-control" placeholder="e.g., 5" required />
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            Application Deadline <span class="required">*</span>
+                        </label>
+                        <input asp-for="ApplicationDeadline" type="date" class="form-control" required />
+                        <span asp-validation-for="ApplicationDeadline" class="validation-error"></span>
+                    </div>
+                </div>
+
+                <div class="form-row full">
+                    <div class="form-group">
+                        <label>Job Location</label>
+                        <input asp-for="JobLocation" class="form-control" placeholder="e.g., Dhaka, Bangladesh or Remote" />
+                        <div class="form-helper-text">
+                            💡 Specify multiple locations separated by commas if applicable
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row full">
+                    <div class="form-group">
+                        <label>
+                            Job Description <span class="required">*</span>
+                        </label>
+                        <textarea asp-for="JobDescription" class="form-control" placeholder="Include responsibilities, qualifications, benefits, and company culture..."></textarea>
+                        <span asp-validation-for="JobDescription" class="validation-error"></span>
+                        <div class="form-helper-text">
+                            💡 Be detailed and specific to attract the right candidates
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 2: Job Requirements & Specifications -->
+            <div class="form-section">
+                <div class="form-section-header">
+                    <span class="form-section-icon">🎯</span>
+                    <h2 class="form-section-title">Requirements & Specifications</h2>
+                </div>
+
+                <div class="form-row thirds">
+                    <div class="form-group">
+                        <label>Min. Experience (Years)</label>
+                        <input asp-for="MinimumExperience" type="number" min="0" class="form-control" placeholder="e.g., 3" />
+                    </div>
+                    <div class="form-group">
+                        <label>Education Level</label>
+                        <input asp-for="EducationLevel" class="form-control" placeholder="e.g., Bachelor's Degree" />
+                    </div>
+                    <div class="form-group">
+                        <label>Salary Range (Optional)</label>
+                        <input type="text" name="SalaryRange" class="form-control" placeholder="e.g., $50,000 - $80,000" />
+                    </div>
+                </div>
+
+                <div class="form-row half">
+                    <div class="form-group">
+                        <label>
+                            Job Type <span class="required">*</span>
+                        </label>
+                        <select asp-for="JobType" class="form-control" required>
+                            <option value="">-- Select Job Type --</option>
+                            <option value="Full Time">Full Time</option>
+                            <option value="Part Time">Part Time</option>
+                            <option value="Contractual">Contractual</option>
+                            <option value="Internship">Internship</option>
+                            <option value="Remote">Remote</option>
+                            <option value="Hybrid">Hybrid</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            Job Sector <span class="required">*</span>
+                        </label>
+                        <select asp-for="JobSector" class="form-control" required>
+                            <option value="">-- Select Sector --</option>
+                            <option value="Private">Private Sector</option>
+                            <option value="Govt">Government Sector</option>
+                            <option value="NGO">NGO / Non-Profit</option>
+                            <option value="Startup">Startup</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row full">
+                    <div class="form-group">
+                        <label>
+                            Required Skills <span class="required">*</span>
+                        </label>
+                        <input asp-for="RequiredSkills" class="form-control" placeholder="e.g., C#, ASP.NET Core, SQL Server, Azure, Git (separate with commas)" required />
+                        <span asp-validation-for="RequiredSkills" class="validation-error"></span>
+                        <div class="form-helper-text">
+                            💡 Tip: Separate skills with commas for better candidate matching
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    <strong>📌 Pro Tip:</strong> The more detailed your requirements, the better we can match candidates to your job opening.
+                </div>
+            </div>
+
+            <!-- Section 3: Attachments -->
+            <div class="form-section">
+                <div class="form-section-header">
+                    <span class="form-section-icon">📎</span>
+                    <h2 class="form-section-title">Job Specification (Optional)</h2>
+                </div>
+
+                <div class="file-upload-area" id="fileUploadArea">
+                    <div class="file-upload-icon">📄</div>
+                    <div class="file-upload-text">Drop your file here or click to browse</div>
+                    <div class="file-upload-hint">Supported formats: PDF, DOC, DOCX (Max 5MB)</div>
+                    <input asp-for="Attachment" type="file" id="fileInput" accept=".pdf,.doc,.docx" />
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="button-group">
+                <a href="/Recruiter/Jobs" class="btn btn-secondary">
+                    ← Cancel
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    ✓ Post Job
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // File Upload Drag & Drop
+    const fileUploadArea = document.getElementById('fileUploadArea');
+    const fileInput = document.getElementById('fileInput');
+
+    if (fileUploadArea && fileInput) {
+        fileUploadArea.addEventListener('click', () => fileInput.click());
+
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            fileUploadArea.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            fileUploadArea.addEventListener(eventName, () => {
+                fileUploadArea.classList.add('dragover');
+            }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            fileUploadArea.addEventListener(eventName, () => {
+                fileUploadArea.classList.remove('dragover');
+            }, false);
+        });
+
+        fileUploadArea.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            fileInput.files = files;
+        }, false);
+    }
+
+    // Form Validation & Auto-focus first invalid field
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const inputs = form.querySelectorAll('[required]');
+            let firstInvalid = null;
+
+            inputs.forEach(input => {
+                if (!input.value.trim()) {
+                    if (!firstInvalid) firstInvalid = input;
+                    input.classList.add('is-invalid');
+                } else {
+                    input.classList.remove('is-invalid');
+                }
+            });
+
+            if (firstInvalid) {
+                firstInvalid.focus();
+            }
+        });
+    }
+
+    // Set minimum date to tomorrow
+    document.addEventListener('DOMContentLoaded', function() {
+        const dateInput = document.getElementById('ApplicationDeadline');
+        if (dateInput) {
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const tomorrowString = tomorrow.toISOString().split('T')[0];
+            dateInput.setAttribute('min', tomorrowString);
+        }
+    });
+</script>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Custom validation for FutureDate
+        if ($.validator && $.validator.unobtrusive) {
+            $.validator.addMethod("futuredate", function (value, element, params) {
+                if (!value) return true;
+                var minDate = new Date(params.mindate);
+                var selectedDate = new Date(value);
+                minDate.setHours(0, 0, 0, 0);
+                selectedDate.setHours(0, 0, 0, 0);
+                return selectedDate >= minDate;
+            });
+            $.validator.unobtrusive.adapters.add("futuredate", ["mindate"], function (options) {
+                options.rules["futuredate"] = { mindate: options.params.mindate };
+                options.messages["futuredate"] = options.message;
+            });
+        }
+    </script>
+}

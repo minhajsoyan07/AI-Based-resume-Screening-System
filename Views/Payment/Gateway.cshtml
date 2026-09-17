@@ -1,0 +1,465 @@
+@{
+    Layout = null;
+    int credits = ViewBag.Credits ?? 0;
+    decimal price = ViewBag.Price ?? 0m;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Secure Checkout - ResuMatch</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #10b981; --primary-dark: #059669; --bg: #f3f4f6; --surface: #ffffff; --border: #e5e7eb; --text-main: #111827; --text-muted: #6b7280; --error: #ef4444; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; }
+        .header { background: var(--surface); padding: 1rem 2rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .header-logo { font-size: 1.25rem; font-weight: 700; color: var(--primary); text-decoration: none; display: flex; align-items: center; gap: 0.5rem; }
+        .main-container { flex: 1; max-width: 1100px; margin: 0 auto; width: 100%; padding: 2rem 1rem; display: grid; grid-template-columns: 1fr 380px; gap: 2rem; }
+        .card { background: var(--surface); border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow: hidden; }
+        .card-header { padding: 1.5rem; border-bottom: 1px solid var(--border); background: #f9fafb; }
+        .card-title { font-size: 1.25rem; font-weight: 700; }
+        .card-subtitle { font-size: 0.9rem; color: var(--text-muted); }
+        .tabs { display: flex; background: #f3f4f6; border-bottom: 1px solid var(--border); padding: 0.5rem; gap: 0.5rem; }
+        .tab { flex: 1; padding: 0.75rem; text-align: center; font-weight: 500; font-size: 0.9rem; color: var(--text-muted); cursor: pointer; border: none; background: transparent; border-radius: 8px; transition: 0.3s; }
+        .tab.active { color: var(--primary); background: var(--surface); font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .tab-content { padding: 1.5rem; display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s; }
+        @@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .methods-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+        .method-box { border: 2px solid var(--border); border-radius: 8px; padding: 1.25rem 1rem; text-align: center; cursor: pointer; transition: 0.3s; background: var(--surface); }
+        .method-box:hover { border-color: var(--primary); background: #f0fdf4; }
+        .method-box.selected { border-color: var(--primary); background: #f0fdf4; box-shadow: 0 0 0 3px rgba(16,185,129,0.2); }
+        .method-logo { font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem; }
+        .method-name { font-size: 0.85rem; color: var(--text-muted); }
+        .form-section { display: none; padding: 1.5rem; border-top: 1px solid var(--border); animation: fadeIn 0.3s; }
+        .form-section.active { display: block; }
+        .form-group { margin-bottom: 1rem; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .form-label { display: block; font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem; }
+        .form-input, .form-select { width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 6px; font-size: 1rem; font-family: inherit; }
+        .form-input:focus, .form-select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(16,185,129,0.2); }
+        .error-message { color: var(--error); font-size: 0.8rem; margin-top: 0.25rem; display: none; }
+        .btn-pay { width: 100%; background: var(--primary); color: white; border: none; padding: 1rem; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: 0.3s; display: flex; justify-content: center; align-items: center; gap: 0.5rem; }
+        .btn-pay:hover { background: var(--primary-dark); }
+        .summary-card { position: sticky; top: 2rem; height: max-content; }
+        .summary-row { display: flex; justify-content: space-between; padding: 1rem 0; border-bottom: 1px dashed var(--border); }
+        .summary-total { font-size: 1.25rem; font-weight: 700; color: var(--primary); padding-top: 1rem; border-top: 2px solid var(--border); display: flex; justify-content: space-between; }
+        
+        /* Mobile Wallet Gateway Overlay */
+        .gateway-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 100; backdrop-filter: blur(4px); animation: fadeIn 0.3s; }
+        .gateway-modal { background: #fff; width: 100%; max-width: 400px; border-radius: 12px; overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); display: flex; flex-direction: column; }
+        .gw-header { padding: 1.5rem; text-align: center; color: white; position: relative; }
+        .gw-header.bkash { background: #e2136e; }
+        .gw-header.nagad { background: #ec1c24; }
+        .gw-header.rocket { background: #8c338e; }
+        .gw-header.upay { background: #00529b; }
+        .gw-logo { font-size: 1.5rem; font-weight: 800; margin-bottom: 0.5rem; }
+        .gw-amount { font-size: 1.25rem; font-weight: 600; }
+        .gw-body { padding: 2rem 1.5rem; text-align: center; }
+        .gw-step { display: none; animation: fadeIn 0.3s; }
+        .gw-step.active { display: block; }
+        .gw-input { text-align: center; letter-spacing: 2px; font-size: 1.25rem; }
+        .gw-pin-input { letter-spacing: 10px; font-size: 1.5rem; -webkit-text-security: disc; }
+        .gw-btn { width: 100%; padding: 0.75rem; border: none; border-radius: 6px; font-weight: 600; font-size: 1rem; color: white; cursor: pointer; margin-top: 1.5rem; transition: 0.3s; }
+        .gw-btn.bkash { background: #e2136e; }
+        .gw-btn.nagad { background: #ec1c24; }
+        .gw-btn.rocket { background: #8c338e; }
+        .gw-btn.upay { background: #00529b; }
+        .gw-btn:hover { opacity: 0.9; }
+        .gw-close { position: absolute; top: 1rem; right: 1rem; color: white; cursor: pointer; background: transparent; border: none; font-size: 1.5rem; line-height: 1; }
+        .gw-error { color: #e2136e; font-size: 0.9rem; margin-top: 0.5rem; display: none; }
+        .gw-footer { text-align: center; padding: 1rem; font-size: 0.8rem; color: var(--text-muted); border-top: 1px solid var(--border); }
+        .gw-spinner { border: 3px solid rgba(0,0,0,0.1); border-top: 3px solid var(--primary); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 1rem; }
+        @@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Processing Full Overlay */
+        .processing-overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.9); z-index: 200; justify-content: center; align-items: center; flex-direction: column; }
+        
+        @@media (max-width: 768px) { .main-container { grid-template-columns: 1fr; } .summary-card { order: -1; position: static; } }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <a href="javascript:history.back()" class="header-logo">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 19l-7-7 7-7"/></svg>
+            <img src="/images/logo.png" alt="ResuMatch Logo" style="height: 35px; margin-left: 0.25rem;" />
+        </a>
+        <div style="font-size:0.85rem; font-weight:600; color:var(--primary);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right:4px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Secure Checkout</div>
+    </header>
+
+    <div class="main-container">
+        <!-- Main Form Card -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">Select Payment Method</div>
+                <div class="card-subtitle">Choose your preferred payment option</div>
+            </div>
+
+            <div class="tabs">
+                <button type="button" class="tab active" onclick="switchTab('mobile')">Mobile Banking</button>
+                <button type="button" class="tab" onclick="switchTab('cards')">Cards</button>
+                <button type="button" class="tab" onclick="switchTab('bank')">Bank Transfer</button>
+            </div>
+
+            <!-- Standard HTML Form -->
+            <form id="mainForm" action="/Payment/ProcessPayment" method="post" style="display:none;">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="credits" value="@credits" />
+                <input type="hidden" name="price" value="@price" />
+                <input type="hidden" name="method" id="formMethod" value="bKash" />
+                <input type="hidden" name="transactionId" id="formTransactionId" value="" />
+                
+                <!-- Fields for various methods -->
+                <input type="hidden" name="mobileNumber" id="formMobileNumber" />
+                <input type="hidden" name="cardNumber" id="formCardNumber" />
+                <input type="hidden" name="expiryDate" id="formExpiryDate" />
+                <input type="hidden" name="cvv" id="formCvv" />
+                <input type="hidden" name="bankName" id="formBankName" />
+                <input type="hidden" name="accountNumber" id="formAccountNumber" />
+            </form>
+
+            <!-- Mobile Banking UI -->
+            <div id="tab-mobile" class="tab-content active">
+                <div class="methods-grid">
+                    <div class="method-box selected" onclick="selectMethod('bKash', this)">
+                        <div class="method-logo" style="color: #e2136e;">bKash</div>
+                        <div class="method-name">Mobile Wallet</div>
+                    </div>
+                    <div class="method-box" onclick="selectMethod('Nagad', this)">
+                        <div class="method-logo" style="color: #ec1c24;">NAGAD</div>
+                        <div class="method-name">Mobile Wallet</div>
+                    </div>
+                    <div class="method-box" onclick="selectMethod('Rocket', this)">
+                        <div class="method-logo" style="color: #8c338e;">ROCKET</div>
+                        <div class="method-name">Mobile Wallet</div>
+                    </div>
+                    <div class="method-box" onclick="selectMethod('Upay', this)">
+                        <div class="method-logo" style="color: #00529b;">Upay</div>
+                        <div class="method-name">Mobile Wallet</div>
+                    </div>
+                </div>
+                <div style="padding: 1rem;">
+                    <button type="button" class="btn-pay" onclick="openWalletGateway()">Proceed to Pay</button>
+                </div>
+            </div>
+
+            <!-- Cards UI -->
+            <div id="tab-cards" class="tab-content">
+                <div class="methods-grid">
+                    <div class="method-box selected" onclick="selectMethod('Visa', this)">
+                        <div class="method-logo" style="color: #1a1f71;">VISA</div>
+                    </div>
+                    <div class="method-box" onclick="selectMethod('MasterCard', this)">
+                        <div class="method-logo" style="color: #eb001b;">Mastercard</div>
+                    </div>
+                </div>
+                <div class="form-section active" id="cardForm">
+                    <div class="form-group">
+                        <label class="form-label">Card Number</label>
+                        <input type="text" class="form-input" id="uiCardNumber" placeholder="1234 5678 9012 3456" maxlength="19">
+                        <div class="error-message" id="errCardNumber">Invalid card number</div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Expiry Date (MM/YY)</label>
+                            <input type="text" class="form-input" id="uiExpiry" placeholder="MM/YY" maxlength="5">
+                            <div class="error-message" id="errExpiry">Invalid expiry</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">CVV</label>
+                            <input type="password" class="form-input" id="uiCvv" placeholder="123" maxlength="4">
+                            <div class="error-message" id="errCvv">Invalid CVV</div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-pay" onclick="submitCardPayment()">Pay Securely</button>
+                </div>
+            </div>
+
+            <!-- Bank Transfer UI -->
+            <div id="tab-bank" class="tab-content">
+                <div class="form-section active">
+                    <div class="form-group">
+                        <label class="form-label">Select Bank</label>
+                        <select class="form-select" id="uiBankName">
+                            <option value="">-- Select Bank --</option>
+                            <option value="DBBL">Dutch Bangla Bank (DBBL)</option>
+                            <option value="CityBank">City Bank</option>
+                            <option value="BRAC">BRAC Bank</option>
+                            <option value="EBL">Eastern Bank Limited</option>
+                        </select>
+                        <div class="error-message" id="errBank">Select a bank</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Account Number</label>
+                        <input type="text" class="form-input" id="uiAccount" placeholder="Enter Account Number">
+                        <div class="error-message" id="errAccount">Account required</div>
+                    </div>
+                    <button type="button" class="btn-pay" onclick="submitBankPayment()">Confirm Transfer</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Sidebar -->
+        <div class="card summary-card">
+            <div class="card-header">
+                <div class="card-title">Order Summary</div>
+            </div>
+            <div style="padding: 1.5rem;">
+                <div class="summary-row">
+                    <div>
+                        <div style="font-weight:600;">@credits Credits</div>
+                        <div style="font-size:0.85rem; color:var(--text-muted);">Account Top Up</div>
+                    </div>
+                    <div style="font-weight:600;">৳@price.ToString("N0")</div>
+                </div>
+                <div class="summary-total">
+                    <span>Total Due</span>
+                    <span>৳@price.ToString("N0")</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Wallet Gateway Simulation Overlay -->
+    <div class="gateway-overlay" id="gwOverlay">
+        <div class="gateway-modal">
+            <div class="gw-header" id="gwHeader">
+                <button class="gw-close" onclick="closeWalletGateway()">&times;</button>
+                <div class="gw-logo" id="gwLogoText">bKash</div>
+                <div class="gw-amount">৳@price.ToString("N0")</div>
+            </div>
+            
+            <div class="gw-body">
+                <!-- Step 1: Phone Number -->
+                <div class="gw-step active" id="gwStepPhone">
+                    <div style="margin-bottom: 1rem; font-weight: 500;">Enter your <span id="gwBrandName">bKash</span> Account Number</div>
+                    <input type="tel" class="form-input gw-input" id="gwPhone" placeholder="01XXXXXXXXX" maxlength="11">
+                    <div class="gw-error" id="gwPhoneErr">Invalid mobile number</div>
+                    <button class="gw-btn" id="gwBtnPhone" onclick="gwProceedToPin()">Proceed</button>
+                </div>
+
+                <!-- Step 2: PIN -->
+                <div class="gw-step" id="gwStepPin">
+                    <div style="margin-bottom: 1rem; font-weight: 500;">Enter your <span id="gwBrandNamePin">bKash</span> PIN</div>
+                    <input type="password" class="form-input gw-pin-input" id="gwPin" placeholder="●●●●●" maxlength="5">
+                    <div class="gw-error" id="gwPinErr">Incorrect PIN</div>
+                    <button class="gw-btn" id="gwBtnPin" onclick="gwVerifyPin()">Confirm</button>
+                </div>
+
+                <!-- Step 3: Loading -->
+                <div class="gw-step" id="gwStepLoading">
+                    <div class="gw-spinner"></div>
+                    <div style="font-weight: 500;" id="gwLoadingText">Verifying...</div>
+                </div>
+            </div>
+
+            <div class="gw-footer">
+                16247 | Support
+            </div>
+        </div>
+    </div>
+
+    <!-- Full screen processing overlay -->
+    <div class="processing-overlay" id="fullProcessingOverlay">
+        <div class="gw-spinner" style="width:60px; height:60px; border-width:4px;"></div>
+        <h2 style="margin-top:1rem; color:var(--primary);">Processing Payment</h2>
+        <p style="color:var(--text-muted); margin-top:0.5rem;">Please don't close this page</p>
+    </div>
+
+    <script>
+        let currentMethod = 'bKash';
+        const price = @price;
+        const credits = @credits;
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('tab-' + tabId).classList.add('active');
+            
+            // Set default method based on tab
+            if(tabId === 'mobile') selectMethod('bKash');
+            else if(tabId === 'cards') selectMethod('Visa');
+            else if(tabId === 'bank') selectMethod('DBBL');
+        }
+
+        function selectMethod(method, element = null) {
+            currentMethod = method;
+            document.getElementById('formMethod').value = method;
+            
+            if (element) {
+                const container = element.parentElement;
+                container.querySelectorAll('.method-box').forEach(el => el.classList.remove('selected'));
+                element.classList.add('selected');
+            }
+        }
+
+        // --- Mobile Wallet Simulation Logic ---
+        const walletConfig = {
+            'bKash': { color: 'bkash', logo: 'bKash' },
+            'Nagad': { color: 'nagad', logo: 'NAGAD' },
+            'Rocket':{ color: 'rocket', logo: 'ROCKET' },
+            'Upay':  { color: 'upay', logo: 'Upay' }
+        };
+
+        function openWalletGateway() {
+            const config = walletConfig[currentMethod];
+            if(!config) return;
+
+            // Setup styling
+            const header = document.getElementById('gwHeader');
+            header.className = 'gw-header ' + config.color;
+            
+            const btns = document.querySelectorAll('.gw-btn');
+            btns.forEach(btn => btn.className = 'gw-btn ' + config.color);
+
+            document.getElementById('gwLogoText').textContent = config.logo;
+            document.getElementById('gwBrandName').textContent = config.logo;
+            document.getElementById('gwBrandNamePin').textContent = config.logo;
+
+            // Reset state
+            document.getElementById('gwPhone').value = '';
+            document.getElementById('gwPin').value = '';
+            document.querySelectorAll('.gw-error').forEach(e => e.style.display = 'none');
+            
+            gwShowStep('gwStepPhone');
+            document.getElementById('gwOverlay').style.display = 'flex';
+        }
+
+        function closeWalletGateway() {
+            document.getElementById('gwOverlay').style.display = 'none';
+        }
+
+        function gwShowStep(stepId) {
+            document.querySelectorAll('.gw-step').forEach(s => s.classList.remove('active'));
+            document.getElementById(stepId).classList.add('active');
+        }
+
+        function gwProceedToPin() {
+            const phone = document.getElementById('gwPhone').value.trim();
+            if(!/^01[0-9]{9}$/.test(phone)) {
+                document.getElementById('gwPhoneErr').style.display = 'block';
+                return;
+            }
+            document.getElementById('gwPhoneErr').style.display = 'none';
+            gwShowStep('gwStepPin');
+        }
+
+        function gwVerifyPin() {
+            const pin = document.getElementById('gwPin').value.trim();
+            if(pin.length !== 5 || !/^\d+$/.test(pin)) {
+                document.getElementById('gwPinErr').textContent = "PIN must be 5 digits";
+                document.getElementById('gwPinErr').style.display = 'block';
+                return;
+            }
+            
+            document.getElementById('gwPinErr').style.display = 'none';
+            gwShowStep('gwStepLoading');
+
+            // AJAX Call to verify PIN
+            fetch('/Payment/VerifyPin', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                },
+                body: JSON.stringify({
+                    Pin: pin,
+                    Method: currentMethod,
+                    Credits: credits,
+                    Price: price
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    // Success! Auto-submit the main form
+                    document.getElementById('formMobileNumber').value = document.getElementById('gwPhone').value;
+                    document.getElementById('formTransactionId').value = data.transactionId;
+                    
+                    closeWalletGateway();
+                    document.getElementById('fullProcessingOverlay').style.display = 'flex';
+                    
+                    setTimeout(() => {
+                        document.getElementById('mainForm').submit();
+                    }, 500);
+                } else {
+                    // Fail
+                    gwShowStep('gwStepPin');
+                    document.getElementById('gwPin').value = '';
+                    document.getElementById('gwPinErr').textContent = data.message || "Incorrect PIN";
+                    document.getElementById('gwPinErr').style.display = 'block';
+                }
+            })
+            .catch(err => {
+                gwShowStep('gwStepPin');
+                document.getElementById('gwPinErr').textContent = "Connection error. Try again.";
+                document.getElementById('gwPinErr').style.display = 'block';
+            });
+        }
+
+        // --- Card Payment Logic ---
+        function submitCardPayment() {
+            const cardNum = document.getElementById('uiCardNumber').value.replace(/\s/g,'');
+            const expiry = document.getElementById('uiExpiry').value;
+            const cvv = document.getElementById('uiCvv').value;
+
+            let valid = true;
+            if(cardNum.length < 13 || cardNum.length > 19 || !/^\d+$/.test(cardNum)) {
+                document.getElementById('errCardNumber').style.display = 'block'; valid = false;
+            } else document.getElementById('errCardNumber').style.display = 'none';
+
+            if(!/^\d{2}\/\d{2}$/.test(expiry)) {
+                document.getElementById('errExpiry').style.display = 'block'; valid = false;
+            } else document.getElementById('errExpiry').style.display = 'none';
+
+            if(!/^\d{3,4}$/.test(cvv)) {
+                document.getElementById('errCvv').style.display = 'block'; valid = false;
+            } else document.getElementById('errCvv').style.display = 'none';
+
+            if(!valid) return;
+
+            document.getElementById('formCardNumber').value = cardNum;
+            document.getElementById('formExpiryDate').value = expiry;
+            document.getElementById('formCvv').value = cvv;
+
+            document.getElementById('fullProcessingOverlay').style.display = 'flex';
+            setTimeout(() => document.getElementById('mainForm').submit(), 800);
+        }
+
+        // --- Bank Payment Logic ---
+        function submitBankPayment() {
+            const bank = document.getElementById('uiBankName').value;
+            const account = document.getElementById('uiAccount').value;
+
+            let valid = true;
+            if(!bank) { document.getElementById('errBank').style.display = 'block'; valid = false; }
+            else document.getElementById('errBank').style.display = 'none';
+
+            if(!account) { document.getElementById('errAccount').style.display = 'block'; valid = false; }
+            else document.getElementById('errAccount').style.display = 'none';
+
+            if(!valid) return;
+
+            document.getElementById('formMethod').value = bank;
+            document.getElementById('formBankName').value = bank;
+            document.getElementById('formAccountNumber').value = account;
+
+            document.getElementById('fullProcessingOverlay').style.display = 'flex';
+            setTimeout(() => document.getElementById('mainForm').submit(), 800);
+        }
+
+        // Card Formatting
+        document.getElementById('uiCardNumber').addEventListener('input', function(e) {
+            this.value = this.value.replace(/\D/g, '').replace(/(\d{4})/g, '$1 ').trim();
+        });
+        document.getElementById('uiExpiry').addEventListener('input', function(e) {
+            let v = this.value.replace(/\D/g, '');
+            if(v.length >= 2) v = v.slice(0,2) + '/' + v.slice(2,4);
+            this.value = v;
+        });
+    </script>
+</body>
+</html>

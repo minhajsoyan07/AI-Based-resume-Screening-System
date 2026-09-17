@@ -1,0 +1,163 @@
+@model AIResumeScreeningSystem.DTOs.AdminDashboardViewModel
+@{
+    ViewData["Title"] = "Admin Dashboard";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="fade-in" style="padding: 1.75rem 0;">
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <div>
+            <h1>Dashboard</h1>
+            <p>Platform overview — @DateTime.Now.ToString("dddd, dd MMMM yyyy")</p>
+        </div>
+    </div>
+
+    <!-- ── REVENUE ROW ── -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.5rem;">
+        <div class="kpi-card">
+            <div class="kpi-icon green">
+                <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <div class="kpi-content">
+                <div class="kpi-value">৳@Model.TotalEarnings.ToString("N0")</div>
+                <div class="kpi-label">Total Revenue</div>
+            </div>
+            <a href="/portal/admin/Revenue" style="margin-left:auto;align-self:center;font-size:0.78rem;font-weight:700;color:var(--admin-primary);text-decoration:none;white-space:nowrap;">Details →</a>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon purple-bg">
+                <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+            </div>
+            <div class="kpi-content">
+                <div class="kpi-value">৳@Model.EarningsThisMonth.ToString("N0")</div>
+                <div class="kpi-label">Revenue (Last 30 days)</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── PLATFORM STATS ── -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1.25rem;margin-bottom:1.75rem;">
+        <div class="kpi-card">
+            <div class="kpi-icon purple-bg">
+                <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            </div>
+            <div class="kpi-content">
+                <div class="kpi-value">@Model.TotalUsers</div>
+                <div class="kpi-label">Total Users</div>
+            </div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon blue">
+                <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>
+            </div>
+            <div class="kpi-content">
+                <div class="kpi-value">@Model.ActiveJobs</div>
+                <div class="kpi-label">Active Jobs</div>
+            </div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon yellow">
+                <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+            </div>
+            <div class="kpi-content">
+                <div class="kpi-value">@Model.TotalApplications</div>
+                <div class="kpi-label">Applications</div>
+            </div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon green">
+                <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <div class="kpi-content">
+                <div class="kpi-value">@Model.TotalHired</div>
+                <div class="kpi-label">Total Hired</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── TABLES ROW ── -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;">
+
+        <!-- Recent Users -->
+        <div class="card">
+            <div class="card-header">
+                <h3>
+                    <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    New Registrations
+                </h3>
+                <a href="/portal/admin/Users" style="font-size:0.8rem;font-weight:700;color:var(--admin-primary);text-decoration:none;">View all →</a>
+            </div>
+            <div class="card-body" style="padding:0;">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Role</th>
+                            <th>Joined</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var user in Model.RecentUsers)
+                        {
+                            <tr>
+                                <td>
+                                    <div style="font-weight:700;font-size:0.88rem;">@user.FullName</div>
+                                    <div style="font-size:0.75rem;color:var(--text-muted);">@user.Email</div>
+                                </td>
+                                <td><span class="@(user.Role == "Admin" ? "badge-purple" : "badge-neutral")">@user.Role</span></td>
+                                <td style="font-size:0.8rem;color:var(--text-muted);">@user.CreatedDate.ToString("dd MMM yy")</td>
+                            </tr>
+                        }
+                        @if (!Model.RecentUsers.Any())
+                        {
+                            <tr><td colspan="3" style="text-align:center;padding:1.5rem;color:var(--text-muted);">No users yet.</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Recent Credit Purchases -->
+        <div class="card">
+            <div class="card-header">
+                <h3>
+                    <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    Recent Purchases
+                </h3>
+                <a href="/portal/admin/Revenue" style="font-size:0.8rem;font-weight:700;color:var(--admin-primary);text-decoration:none;">View all →</a>
+            </div>
+            <div class="card-body" style="padding:0;">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var trx in Model.RecentTransactions)
+                        {
+                            <tr>
+                                <td>
+                                    <div style="font-weight:700;font-size:0.88rem;">@(trx.User?.FullName ?? "—")</div>
+                                    <div style="font-size:0.75rem;color:var(--text-muted);">@trx.CreatedAt.ToString("dd MMM yy")</div>
+                                </td>
+                                <td style="font-weight:700;color:var(--admin-primary);">৳@trx.AmountBDT.ToString("N0")</td>
+                                <td>
+                                    <span class="badge-active">Paid</span>
+                                </td>
+                            </tr>
+                        }
+                        @if (!Model.RecentTransactions.Any())
+                        {
+                            <tr><td colspan="3" style="text-align:center;padding:1.5rem;color:var(--text-muted);">No transactions yet.</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,219 @@
+@{
+    ViewData["Title"] = "For Recruiters | ResuMatch Intelligence";
+}
+
+<style>
+    .rec-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 3rem 1.5rem;
+        animation: fadeIn 0.4s ease-out;
+    }
+
+    .rec-header {
+        text-align: center;
+        margin-bottom: 4rem;
+    }
+
+    .rec-title {
+        font-size: 2.25rem;
+        font-weight: 800;
+        color: var(--brand-dark);
+        margin-bottom: 0.75rem;
+        letter-spacing: -0.02em;
+    }
+
+    .rec-subtitle {
+        font-size: 1.05rem;
+        color: var(--text-muted);
+        max-width: 600px;
+        margin: 0 auto;
+        line-height: 1.5;
+    }
+
+    /* Core Metrics Grid */
+    .metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+        margin-bottom: 4rem;
+    }
+
+    .metric-card {
+        background: var(--bg-white);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        padding: 2rem;
+        text-align: center;
+    }
+
+    .metric-val {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: #7c3aed;
+        margin-bottom: 0.5rem;
+        line-height: 1;
+    }
+
+    .metric-label {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: var(--text-main);
+        margin-bottom: 0.5rem;
+    }
+
+    .metric-desc {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        line-height: 1.4;
+    }
+
+    /* Flat List of Capabilities */
+    .caps-panel {
+        background: var(--bg-white);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        padding: 2.5rem;
+        margin-bottom: 4rem;
+    }
+
+    .caps-title {
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: var(--brand-dark);
+        margin-bottom: 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 0.75rem;
+    }
+
+    .caps-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 2rem;
+    }
+
+    .cap-item h3 {
+        font-size: 1.05rem;
+        font-weight: 800;
+        color: var(--text-main);
+        margin-bottom: 0.5rem;
+    }
+
+    .cap-item p {
+        font-size: 0.88rem;
+        color: var(--text-muted);
+        line-height: 1.4;
+    }
+
+    /* Minimal CTA Banner for Employers */
+    .employer-cta {
+        background: var(--brand-dark);
+        color: white;
+        border-radius: var(--radius-md);
+        padding: 2.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .cta-left h2 {
+        font-size: 1.35rem;
+        font-weight: 800;
+        color: white;
+        margin-bottom: 0.25rem;
+    }
+
+    .cta-left p {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 0.9rem;
+    }
+
+    .btn-rec-cta {
+        background: #7c3aed;
+        color: white !important;
+        padding: 0.65rem 1.75rem;
+        font-size: 0.85rem;
+        font-weight: 700;
+        border-radius: var(--radius-md);
+        text-decoration: none;
+        transition: background var(--transition-fast);
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+    }
+
+    .btn-rec-cta:hover {
+        background: #6d28d9;
+    }
+
+    @@media (max-width: 768px) {
+        .metrics-grid { grid-template-columns: 1fr; }
+        .caps-grid { grid-template-columns: 1fr; }
+        .employer-cta { flex-direction: column; gap: 1.5rem; text-align: center; }
+    }
+</style>
+
+<div class="rec-container">
+    
+    <!-- Clean Header -->
+    <header class="rec-header">
+        <h1 class="rec-title">For Recruiters</h1>
+        <p class="rec-subtitle">
+            Optimize your screening pipeline, identify best-fit candidates, and track skill competencies objectively at scale.
+        </p>
+    </header>
+
+    <!-- Metrics Grid -->
+    <section class="metrics-grid">
+        <div class="metric-card">
+            <div class="metric-val">90%</div>
+            <h3 class="metric-label">Efficiency Gain</h3>
+            <p class="metric-desc">Eliminate the manual scanning phase and focus strictly on interviewing high-ranking talent.</p>
+        </div>
+        <div class="metric-card">
+            <div class="metric-val">80+</div>
+            <h3 class="metric-label">Precision Scoring</h3>
+            <p class="metric-desc">Advanced semantic weights map experience, title synonyms, and credentials contextually.</p>
+        </div>
+        <div class="metric-card">
+            <div class="metric-val">0%</div>
+            <h3 class="metric-label">Objective Assessment</h3>
+            <p class="metric-desc">Screening profiles are ranked purely based on their direct credentials and qualifications.</p>
+        </div>
+    </section>
+
+    <!-- Platform Capabilities -->
+    <section class="caps-panel">
+        <h2 class="caps-title">Platform Capabilities</h2>
+        
+        <div class="caps-grid">
+            <div class="cap-item">
+                <h3>Bulk Document Parsing</h3>
+                <p>Upload files in batch. The processing pipeline digests candidates simultaneously, generating structured indexes in seconds.</p>
+            </div>
+            <div class="cap-item">
+                <h3>Skill Gap Analysis</h3>
+                <p>The parser uncovers overlapping work categories and highlights exact qualifications missing from applicant resumes.</p>
+            </div>
+            <div class="cap-item">
+                <h3>Custom Requisition Calibration</h3>
+                <p>Tweak specific parameter weights inside your recruiter panel to align ranking scores with project requirements.</p>
+            </div>
+            <div class="cap-item">
+                <h3>OCR Fallback Processing</h3>
+                <p>Automatically triggers OCR parsing for flat PDFs, images, or locked files to maintain absolute extraction integrity.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Minimal CTA -->
+    <section class="employer-cta">
+        <div class="cta-left">
+            <h2>Accelerate Your Hiring Today</h2>
+            <p>Join recruitment teams finding and analyzing qualified candidates in seconds.</p>
+        </div>
+        <a href="/Auth/RecruiterRegister" class="btn-rec-cta">
+            Register Employer &rarr;
+        </a>
+    </section>
+
+</div>

@@ -1,0 +1,422 @@
+@model AIResumeScreeningSystem.Controllers.TokenPackage
+@{
+    ViewData["Title"] = "Secure Checkout";
+    Layout = "~/Views/Shared/_ApplicantLayout.cshtml";
+}
+
+<style>
+    .checkout-container {
+        max-width: 900px;
+        margin: 1.5rem auto;
+        display: grid;
+        grid-template-columns: 1fr 340px;
+        gap: 1.5rem;
+    }
+
+    .payment-selection {
+        background: white;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+    }
+
+    .payment-tabs {
+        display: flex;
+        background: #f8fafc;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .tab-btn {
+        flex: 1;
+        padding: 1rem;
+        border: none;
+        background: transparent;
+        font-weight: 600;
+        color: var(--text-muted);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        border-bottom: 2px solid transparent;
+        font-size: 0.9rem;
+    }
+
+    .tab-btn.active {
+        color: var(--brand-primary);
+        background: white;
+        border-bottom-color: var(--brand-primary);
+    }
+
+    .tab-content {
+        padding: 2rem;
+        display: none;
+    }
+
+    .tab-content.active {
+        display: block;
+    }
+
+    .btn-bkash { background: #e2136e; color: white; border: none; }
+    .btn-bkash:hover { background: #c20c5d; }
+    
+    .btn-nagad { background: #ed1c24; color: white; border: none; }
+    .btn-nagad:hover { background: #d11219; }
+    
+    .btn-card { background: #1e293b; color: white; border: none; }
+    .btn-card:hover { background: #0f172a; }
+
+    .form-group { margin-bottom: 1.25rem; }
+    .form-group label { display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.4rem; text-transform: uppercase; }
+    .form-input { width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.95rem; }
+    .form-input:focus { outline: none; border-color: var(--brand-primary); }
+
+    .order-summary {
+        background: #f8fafc;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 1.5rem;
+        height: fit-content;
+    }
+
+    .order-summary h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 1.25rem; }
+    .summary-item { display: flex; justify-content: space-between; margin-bottom: 0.75rem; font-size: 0.9rem; }
+    .summary-total { border-top: 1px solid var(--border-color); margin-top: 1.25rem; padding-top: 1.25rem; font-weight: 700; font-size: 1.25rem; color: var(--brand-primary); }
+
+    #processingOverlay {
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(255, 255, 255, 0.95);
+        z-index: 1000;
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid var(--brand-primary);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        margin-bottom: 1rem;
+    }
+
+    @@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    @@media (max-width: 800px) {
+        .checkout-container { grid-template-columns: 1fr; }
+    }
+    .buy-btn {
+        width: 100%;
+        padding: 0.75rem;
+        border-radius: 4px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        text-align: center;
+        text-decoration: none;
+        cursor: pointer;
+        transition: background 0.15s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        border: none;
+        margin-top: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.01em;
+    }
+    
+    .buy-btn:hover {
+        transform: none;
+        filter: none;
+    }
+    
+    .buy-btn:active {
+        transform: none;
+    }
+
+    .buy-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+</style>
+
+<div class="checkout-container">
+    <!-- Payment Methods -->
+    <div class="payment-selection">
+        <div class="payment-tabs">
+            <button class="tab-btn active" onclick="showTab('bkash', this)">
+                <div style="color: #e2136e; font-weight: 800; font-style: italic; font-size: 1.1rem;">bKash</div>
+            </button>
+            <button class="tab-btn" onclick="showTab('nagad', this)">
+                <div style="color: #ed1c24; font-weight: 800; font-style: italic; font-size: 1.1rem;">Nagad</div>
+            </button>
+            <button class="tab-btn" onclick="showTab('card', this)">
+                <div style="font-weight: 700; color: #1e293b;">Card</div>
+            </button>
+        </div>
+
+        <!-- bKash Form -->
+        <div id="bkash" class="tab-content active">
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <div style="background-color: #e2136e; color: white; padding: 6px 16px; border-radius: 4px; font-weight: 800; font-size: 1.25rem; display: inline-block; font-style: italic; margin-bottom: 1rem;">bKash</div>
+                <h4 style="font-weight: 800;">Pay with bKash</h4>
+                <p style="font-size: 0.85rem; color: var(--text-muted);" id="bkashDesc">Enter your bKash account number to initiate payment.</p>
+            </div>
+            
+            <form id="bkashForm" onsubmit="handleBkashFlow(event)">
+                <input type="hidden" name="packageId" value="@Model.ID" />
+                <input type="hidden" id="bkashMethod" name="paymentMethod" value="bkash" />
+                
+                <!-- Step 1: Number -->
+                <div id="bkashStep1">
+                    <div class="form-group">
+                        <label>bKash Account Number</label>
+                        <input type="tel" id="bkashNumber" class="form-input" placeholder="01XXXXXXXXX" required pattern="01[3-9][0-9]{8}" maxlength="11" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                    </div>
+                    <button type="submit" class="buy-btn btn-bkash">Proceed to Pay</button>
+                </div>
+
+                <!-- Step 2: OTP -->
+                <div id="bkashStep2" style="display: none;">
+                    <div class="form-group">
+                        <label>Verification Code</label>
+                        <input type="tel" id="bkashOTP" class="form-input" placeholder="Enter 6-digit OTP" maxlength="6" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                        <small style="color: #10b981; display: block; margin-top: 0.5rem; font-weight: 500;">✔ OTP sent to your mobile</small>
+                    </div>
+                    <button type="button" class="buy-btn btn-bkash" onclick="nextBkashStep(3)">Verify OTP</button>
+                </div>
+
+                <!-- Step 3: PIN -->
+                <div id="bkashStep3" style="display: none;">
+                    <div class="form-group">
+                        <label>Enter bKash PIN</label>
+                        <input type="tel" id="bkashPIN" class="form-input" placeholder="Enter 5-digit PIN" maxlength="5" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                    </div>
+                    <button type="button" class="buy-btn btn-bkash" onclick="submitFinalPayment('bkashForm', 'bkash')">Confirm Payment of ৳ @Model.PriceBDT.ToString("N0")</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Nagad Form -->
+        <div id="nagad" class="tab-content">
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <div style="background-color: #ed1c24; color: white; padding: 6px 16px; border-radius: 4px; font-weight: 800; font-size: 1.25rem; display: inline-block; font-style: italic; margin-bottom: 1rem;">Nagad</div>
+                <h4 style="font-weight: 800;">Pay with Nagad</h4>
+                <p style="font-size: 0.85rem; color: var(--text-muted);" id="nagadDesc">Instant payment via Nagad mobile wallet.</p>
+            </div>
+            
+            <form id="nagadForm" onsubmit="handleNagadFlow(event)">
+                <input type="hidden" name="packageId" value="@Model.ID" />
+                <input type="hidden" name="paymentMethod" value="nagad" />
+                
+                <!-- Step 1: Number -->
+                <div id="nagadStep1">
+                    <div class="form-group">
+                        <label>Nagad Account Number</label>
+                        <input type="tel" id="nagadNumber" class="form-input" placeholder="01XXXXXXXXX" required pattern="01[3-9][0-9]{8}" maxlength="11" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                    </div>
+                    <button type="submit" class="buy-btn btn-nagad">Proceed to Pay</button>
+                </div>
+
+                <!-- Step 2: OTP -->
+                <div id="nagadStep2" style="display: none;">
+                    <div class="form-group">
+                        <label>Verification Code</label>
+                        <input type="tel" id="nagadOTP" class="form-input" placeholder="Enter 6-digit OTP" maxlength="6" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                        <small style="color: #10b981; display: block; margin-top: 0.5rem; font-weight: 500;">✔ OTP sent to your mobile</small>
+                    </div>
+                    <button type="button" class="buy-btn btn-nagad" onclick="nextNagadStep(3)">Verify OTP</button>
+                </div>
+
+                <!-- Step 3: PIN -->
+                <div id="nagadStep3" style="display: none;">
+                    <div class="form-group">
+                        <label>Enter Nagad PIN</label>
+                        <input type="tel" id="nagadPIN" class="form-input" placeholder="Enter 4-digit PIN" maxlength="4" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                    </div>
+                    <button type="button" class="buy-btn btn-nagad" onclick="submitFinalPayment('nagadForm', 'nagad')">Confirm Payment of ৳ @Model.PriceBDT.ToString("N0")</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Card Form -->
+        <div id="card" class="tab-content">
+            <h4 style="font-weight: 800; margin-bottom: 1.5rem;">Credit / Debit Card</h4>
+            <form id="cardForm" onsubmit="simulatePayment(event, 'card')">
+                <input type="hidden" name="packageId" value="@Model.ID" />
+                <input type="hidden" name="paymentMethod" value="card" />
+                <div class="form-group">
+                    <label>Cardholder Name</label>
+                    <input type="text" class="form-input" placeholder="John Doe" required>
+                </div>
+                <div class="form-group">
+                    <label>Card Number</label>
+                    <input type="tel" class="form-input" placeholder="XXXX XXXX XXXX XXXX" required maxlength="16" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label>Expiry (MM/YY)</label>
+                        <input type="tel" class="form-input" placeholder="MM/YY" required maxlength="5" oninput="this.value = this.value.replace(/[^0-9/]/g, '')">
+                    </div>
+                    <div class="form-group">
+                        <label>CVV</label>
+                        <input type="tel" class="form-input" placeholder="123" required maxlength="4" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                    </div>
+                </div>
+                <button type="submit" class="buy-btn btn-card">Pay Securely</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Order Summary -->
+    <div class="order-summary">
+        <h3>Order Summary</h3>
+        <div class="summary-item">
+            <span>Package</span>
+            <span style="font-weight: 700;">@Model.Name</span>
+        </div>
+        <div class="summary-item">
+            <span>Credits</span>
+            <span style="font-weight: 700;">@Model.Credits Credits</span>
+        </div>
+        <div class="summary-item">
+            <span>Subtotal</span>
+            <span>৳ @Model.PriceBDT.ToString("N0")</span>
+        </div>
+        <div class="summary-item">
+            <span>Processing Fee</span>
+            <span>৳ 0</span>
+        </div>
+        
+        <div class="summary-total">
+            ৳ @Model.PriceBDT.ToString("N0")
+        </div>
+        
+        <div style="margin-top: 2rem; display: flex; align-items: center; gap: 0.5rem; color: #10b981; font-size: 0.8rem; font-weight: 700;">
+            <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 4.925-3.467 9.463-9.25 11.755a1.006 1.006 0 01-.75 0c-5.783-2.292-9.25-6.83-9.25-11.755 0-.68.056-1.35.166-2.001zm10.708 3.293a1 1 0 00-1.415-1.414L9 9.172 7.543 7.715a1 1 0 00-1.414 1.414l2.25 2.25a1 1 0 001.414 0l3.125-3.125z" clip-rule="evenodd"></path></svg>
+            SSL SECURED PAYMENT
+        </div>
+    </div>
+</div>
+
+<!-- Processing Overlay -->
+<div id="processingOverlay">
+    <div class="spinner"></div>
+    <h3 style="font-weight: 800; margin-bottom: 0.5rem;">Processing Payment...</h3>
+    <p style="color: var(--text-muted);">Please do not refresh the page or click back.</p>
+</div>
+
+<script>
+    function showTab(tabId, btn) {
+        // Update tabs
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        
+        document.getElementById(tabId).classList.add('active');
+        btn.classList.add('active');
+    }
+
+    function handleBkashFlow(e) {
+        e.preventDefault();
+        const number = document.getElementById('bkashNumber').value;
+        if(number.match(/^01[3-9][0-9]{8}$/)) {
+            document.getElementById('bkashStep1').style.display = 'none';
+            document.getElementById('bkashStep2').style.display = 'block';
+            document.getElementById('bkashDesc').innerText = "Enter the verification code sent to " + number;
+        }
+    }
+
+    function nextBkashStep(step) {
+        if(step === 3) {
+            const otp = document.getElementById('bkashOTP').value;
+            if(otp.length === 6) { 
+                document.getElementById('bkashStep2').style.display = 'none';
+                document.getElementById('bkashStep3').style.display = 'block';
+                document.getElementById('bkashDesc').innerText = "Enter your PIN to finalize payment.";
+            } else {
+                alert("Please enter a valid OTP");
+            }
+        }
+    }
+
+    function handleNagadFlow(e) {
+        e.preventDefault();
+        const number = document.getElementById('nagadNumber').value;
+        if(number.match(/^01[3-9][0-9]{8}$/)) {
+            document.getElementById('nagadStep1').style.display = 'none';
+            document.getElementById('nagadStep2').style.display = 'block';
+            document.getElementById('nagadDesc').innerText = "Enter the verification code sent to " + number;
+        }
+    }
+
+    function nextNagadStep(step) {
+        if(step === 3) {
+            const otp = document.getElementById('nagadOTP').value;
+            if(otp.length === 6) { 
+                document.getElementById('nagadStep2').style.display = 'none';
+                document.getElementById('nagadStep3').style.display = 'block';
+                document.getElementById('nagadDesc').innerText = "Enter your PIN to finalize payment.";
+            } else {
+                alert("Please enter a valid OTP");
+            }
+        }
+    }
+
+    function submitFinalPayment(formId, method) {
+        // Validate PIN length
+        if (method === 'bkash') {
+            const pin = document.getElementById('bkashPIN').value;
+            if (pin.length !== 5) { alert("Please enter your 5-digit PIN"); return; }
+        } else if (method === 'nagad') {
+            const pin = document.getElementById('nagadPIN').value;
+            if (pin.length !== 4) { alert("Please enter your 4-digit PIN"); return; }
+        }
+
+        // Show processing overlay
+        const overlay = document.getElementById('processingOverlay');
+        overlay.style.display = 'flex';
+        
+        // Simulate network delay
+        setTimeout(() => {
+            const originalForm = document.getElementById(formId);
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/Credits/ProcessPayment';
+            
+            // Re-create form data to ensure it submits correctly
+            const formData = new FormData(originalForm);
+            for (let [key, value] of formData.entries()) {
+                const hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = key;
+                hiddenInput.value = value;
+                form.appendChild(hiddenInput);
+            }
+            
+            // Add payment method
+            const methodInput = document.createElement('input');
+            methodInput.type = 'hidden';
+            methodInput.name = 'paymentMethod';
+            methodInput.value = method;
+            form.appendChild(methodInput);
+
+            // Add packageId
+            const packageIdInput = document.createElement('input');
+            packageIdInput.type = 'hidden';
+            packageIdInput.name = 'packageId';
+            packageIdInput.value = '@Model.ID';
+            form.appendChild(packageIdInput);
+
+            document.body.appendChild(form);
+            form.submit();
+        }, 3000);
+    }
+
+    function simulatePayment(e, method) {
+        e.preventDefault();
+        submitFinalPayment('cardForm', method);
+    }
+</script>

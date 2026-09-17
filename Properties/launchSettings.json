@@ -1,0 +1,14 @@
+{
+  "profiles": {
+    "AIResumeScreeningSystem": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": true,
+      "applicationUrl": "http://localhost:5000",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "GOOGLE_API_KEY": "AIzaSyALYW9f72RXPcnaO0nvnDt5L_6eu8iCb9g"
+      }
+    }
+  }
+}

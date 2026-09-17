@@ -1,0 +1,50 @@
+@using AIResumeScreeningSystem.DTOs
+@model ErrorViewModel
+@{
+    ViewData["Title"] = "Error";
+    var returnUrl = ViewBag.ReturnUrl as string;
+}
+
+<div class="auth-page">
+    <div class="auth-container error-container">
+        <div class="auth-card">
+            <div class="auth-header error-header">
+                <div class="logo">System Error</div>
+                <p>Something went wrong or access was denied.</p>
+            </div>
+            <div class="auth-body text-center">
+                <div class="error-icon-lg">⚠️</div>
+                <h2 class="mb-3">Access Restricted or Error Occurred</h2>
+                
+                @if (!string.IsNullOrEmpty(returnUrl))
+                {
+                    <div class="alert alert-warning mb-4">
+                        <p class="mb-0">You don't have permission to access the requested page: <br/> 
+                        <code class="small">@returnUrl</code></p>
+                    </div>
+                    <p class="text-muted small mb-4">You may be logged in with a different role. Please logout and login with the correct account.</p>
+                }
+                else
+                {
+                    <p class="text-muted mb-4">An unexpected error occurred while processing your request. Our technical team has been notified.</p>
+                }
+
+                @if (Model.ShowRequestId)
+                {
+                    <div class="text-muted x-small mb-4 fs-11">Request ID: <code>@Model.RequestId</code></div>
+                }
+
+                <div class="d-grid gap-2">
+                    <a href="/" class="btn btn-primary">Return to Home</a>
+                    <a href="/Auth/Logout" class="btn btn-outline">Logout &amp; Switch Account</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.error-container { max-width: 500px; }
+.error-header { background: var(--danger); }
+.error-icon-lg { font-size: 64px; margin-bottom: 20px; }
+</style>

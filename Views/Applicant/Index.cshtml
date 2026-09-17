@@ -1,0 +1,519 @@
+@model AIResumeScreeningSystem.DTOs.ApplicantDashboardViewModel
+@{ 
+    ViewData["Title"] = "Applicant Dashboard"; 
+    Layout = "~/Views/Shared/_ApplicantLayout.cshtml";
+    var userName = Context.Session.GetString("UserName") ?? "there";
+    var currentHour = DateTime.Now.Hour;
+    var greeting = currentHour < 12 ? "Good morning" : currentHour < 17 ? "Good afternoon" : "Good evening";
+    var pct = Model.ProfileCompletion;
+    string tips;
+    if (pct < 40) tips = "Add your headline & summary.";
+    else if (pct < 70) tips = "Include experience & education.";
+    else if (pct < 90) tips = "Upload resume & portfolio.";
+    else tips = "Profile is fully optimized!";
+}
+
+<style>
+    /* Analytics Dashboard Styling */
+    .dashboard-container {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+        animation: fadeIn 0.5s ease-out;
+    }
+
+    /* Welcome Banner - Modern & Minimal */
+    .welcome-banner {
+        background: #ffffff;
+        border-radius:2px;
+        padding: 1.25rem 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: var(--text-main);
+        box-shadow:none;
+        border: 1px solid var(--border-color);
+    }
+
+    .welcome-content h1 {
+        font-size: 1.5rem;
+        font-weight: 800;
+        margin-bottom: 0.35rem;
+        color: var(--text-main);
+        letter-spacing: -0.02em;
+    }
+
+    .welcome-content p {
+        color: var(--text-muted);
+        font-size: 0.95rem;
+        max-width: 500px;
+        line-height: 1.4;
+        margin: 0;
+    }
+
+    .profile-strength-widget {
+        background: #f8fafc;
+        border: 1px solid var(--border-color);
+        border-radius:2px;
+        padding: 0.75rem 1.25rem;
+        width: 320px;
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+    }
+
+    .circular-progress {
+        position: relative;
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: conic-gradient(var(--brand-primary) @(pct)%, #e2e8f0 0);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .circular-progress::after {
+        content: '';
+        position: absolute;
+        width: 44px;
+        height: 44px;
+        background: #f8fafc;
+        border-radius: 50%;
+    }
+
+    .progress-value {
+        position: relative;
+        z-index: 1;
+        font-size: 0.85rem;
+        font-weight: 800;
+        color: var(--text-main);
+    }
+
+    .profile-info {
+        flex: 1;
+    }
+
+    .profile-info h4 {
+        font-size: 0.75rem;
+        text-transform:none;
+        letter-spacing: 0.05em;
+        font-weight: 800;
+        color: var(--text-muted);
+        margin-bottom: 0.25rem;
+    }
+
+    .profile-info p {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        margin-bottom: 0.4rem;
+        line-height: 1.3;
+    }
+
+    .profile-info a {
+        font-size: 0.75rem;
+        color: var(--brand-primary);
+        font-weight: 700;
+        text-decoration: none;
+    }
+
+    .profile-info a:hover {
+        text-decoration: underline;
+    }
+
+    /* Analytics KPI Cards */
+    .kpi-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1.5rem;
+    }
+
+    .analytics-card {
+        background: white;
+        border-radius:2px;
+        padding: 1.5rem;
+        box-shadow:none;
+        border: 1px solid var(--border-color);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .analytics-card:hover {
+        transform:none;
+        box-shadow:none;
+        border-color: #cbd5e1;
+    }
+
+    .card-icon-wrapper {
+        width: 44px;
+        height: 44px;
+        border-radius:2px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1rem;
+    }
+
+    .icon-blue { background: #eff6ff; color: #3b82f6; }
+    .icon-orange { background: #fff7ed; color: #f97316; }
+    .icon-purple { background: #faf5ff; color: #a855f7; }
+    .icon-green { background: #f0fdf4; color: #22c55e; }
+
+    .analytics-card h3 {
+        font-size: 2rem;
+        font-weight: 800;
+        color: var(--text-main);
+        margin-bottom: 0.25rem;
+        line-height: 1;
+        letter-spacing: -0.02em;
+    }
+
+    .analytics-card p {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: var(--text-muted);
+        text-transform:none;
+        letter-spacing: 0.05em;
+        margin: 0;
+    }
+
+    /* Simulated Sparkline Graph inside Card */
+    .sparkline {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 35px;
+        display: flex;
+        align-items: flex-end;
+        gap: 2px;
+        opacity: 0.15;
+    }
+    
+    .sparkline-bar {
+        flex: 1;
+        background: currentColor;
+        border-radius: 2px 2px 0 0;
+    }
+
+    /* Main Content Grid — compact minimal */
+    .main-analytics-grid {
+        display: grid;
+        grid-template-columns: 1.6fr 1fr;
+        gap: 1.25rem;
+    }
+
+    .dashboard-panel {
+        background: white;
+        border-radius: 2px;
+        padding: 1.25rem 1.5rem;
+        box-shadow: none;
+        border: 1px solid var(--border-color);
+    }
+
+    .panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .panel-title {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: var(--text-muted);
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        margin: 0;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+    }
+
+    /* Activity Graph */
+    .activity-graph {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        height: 180px;
+        padding: 0;
+        border-bottom: 1px solid var(--border-light);
+        margin-bottom: 0.5rem;
+    }
+
+    .graph-col {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+        flex: 1;
+    }
+
+    .bar-container {
+        width: 70%;
+        max-width: 48px;
+        height: 140px;
+        background: #f1f5f9;
+        border-radius: 4px 4px 0 0;
+        display: flex;
+        align-items: flex-end;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .bar-fill {
+        width: 100%;
+        background: var(--brand-primary);
+        border-radius: 4px 4px 0 0;
+        transition: height 0.8s cubic-bezier(.4,0,.2,1);
+        position: relative;
+    }
+
+    .bar-fill:hover {
+        background: var(--brand-dark);
+    }
+
+    /* Tooltip */
+    .bar-fill::after {
+        content: attr(data-val);
+        position: absolute;
+        top: -24px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #1e293b;
+        color: white;
+        font-size: 0.68rem;
+        font-weight: 700;
+        padding: 2px 7px;
+        border-radius: 4px;
+        opacity: 0;
+        transition: opacity 0.15s;
+        pointer-events: none;
+        white-space: nowrap;
+    }
+
+    .bar-fill:hover::after {
+        opacity: 1;
+    }
+
+    .graph-label {
+        font-size: 0.72rem;
+        color: var(--text-muted);
+        font-weight: 700;
+        margin-top: 0.25rem;
+    }
+
+    .graph-date {
+        font-size: 0.62rem;
+        color: var(--text-light);
+        font-weight: 500;
+    }
+
+    /* Quick Actions List — compact */
+    .action-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+    }
+
+    .action-item {
+        display: flex;
+        align-items: center;
+        padding: 0.7rem 0.85rem;
+        background: transparent;
+        border-radius: 0;
+        text-decoration: none;
+        color: var(--text-main);
+        font-weight: 600;
+        font-size: 0.85rem;
+        transition: all 0.15s;
+        border: none;
+        border-bottom: 1px solid var(--border-light);
+    }
+
+    .action-item:last-child {
+        border-bottom: none;
+    }
+
+    .action-item:hover {
+        background: #f8fafc;
+        color: var(--brand-primary);
+    }
+
+    .action-icon {
+        width: 30px;
+        height: 30px;
+        background: transparent;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 0.75rem;
+        box-shadow: none;
+        border: none;
+    }
+
+    .action-blue { color: #3b82f6; }
+    .action-purple { color: #a855f7; }
+    .action-green { color: var(--brand-primary); }
+
+    .action-arrow {
+        margin-left: auto;
+        color: var(--text-light);
+        font-size: 0.8rem;
+    }
+
+    /* Recommendations — full width */
+    .recommendations-section {
+        background: white;
+        border: 1px solid var(--border-color);
+        border-radius: 2px;
+        padding: 1.5rem;
+    }
+
+    .recommendations-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.25rem;
+        margin-top: 0.75rem;
+    }
+
+    @@keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+</style>
+
+<div class="dashboard-container">
+
+    <!-- 1. Welcome Banner -->
+    <div class="welcome-banner">
+        <div class="welcome-content">
+            <h1>@greeting, @userName!</h1>
+            <p>Here is an analytical view of your career progression for this week. Stay focused and discover new opportunities.</p>
+        </div>
+        
+        <div class="profile-strength-widget">
+            <div class="circular-progress">
+                <span class="progress-value">@pct%</span>
+            </div>
+            <div class="profile-info">
+                <h4>Profile Strength</h4>
+                <p>@tips</p>
+                <a href="/Applicant/Profile">Enhance My Profile &rarr;</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Overview & Actions -->
+    <div class="dashboard-panel" style="animation: fadeIn 0.6s ease-out;">
+        <h2 class="panel-title" style="margin-bottom: 0.75rem;">
+            <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color: var(--text-muted);"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            System Overview & Shortcuts
+        </h2>
+        <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.5; margin-bottom: 1.5rem;">
+            ResuMatch leverages advanced AI to seamlessly align your skills and experience with the ideal job opportunities. 
+            Our semantic matching engine automatically parses your resume to highlight your core strengths, identify missing skills, 
+            and recommend highly relevant positions.
+        </p>
+        
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+            <a href="/Applicant/BrowseJobs" class="btn" style="background: var(--brand-primary); color: white; border: none; padding: 0.6rem 1.25rem; font-size: 0.85rem; font-weight: 600; border-radius: 2px; text-decoration: none; display: flex; align-items: center; gap: 0.5rem;">
+                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                Find Jobs
+            </a>
+            <a href="/Applicant/ProfileAnalytics" class="btn" style="background: #f1f5f9; color: var(--text-main); border: 1px solid var(--border-color); padding: 0.6rem 1.25rem; font-size: 0.85rem; font-weight: 600; border-radius: 2px; text-decoration: none; display: flex; align-items: center; gap: 0.5rem;">
+                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                Profile Analytics
+            </a>
+            <a href="/Matching/Index" class="btn" style="background: #eff6ff; color: #3b82f6; border: 1px solid #bfdbfe; padding: 0.6rem 1.25rem; font-size: 0.85rem; font-weight: 600; border-radius: 2px; text-decoration: none; display: flex; align-items: center; gap: 0.5rem;">
+                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
+                AI Resume Matcher
+            </a>
+        </div>
+    </div>
+
+    <!-- 5. Recent Applications -->
+    @if(Model.Applications != null && Model.Applications.Any())
+    {
+        <div class="dashboard-panel" style="animation: fadeIn 0.6s ease-out; padding: 0;">
+            <div class="panel-header" style="padding: 1.25rem 1.5rem 0.5rem 1.5rem;">
+                <h2 class="panel-title">
+                    <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color: var(--text-muted);"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    Recent Applications
+                </h2>
+                <a href="/Applicant/MyApplications" style="font-size: 0.85rem; font-weight: 700; color: var(--brand-primary); text-decoration: none;">View All &rarr;</a>
+            </div>
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                    <thead>
+                        <tr style="border-bottom: 1px solid var(--border-light); color: var(--text-muted); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em;">
+                            <th style="padding: 1rem 1.5rem;">Job Title</th>
+                            <th style="padding: 1rem 0;">Company</th>
+                            <th style="padding: 1rem 0;">Applied Date</th>
+                            <th style="padding: 1rem 0;">Match Score</th>
+                            <th style="padding: 1rem 1.5rem;">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach(var app in Model.Applications.OrderByDescending(a => a.AppliedDate).Take(5))
+                        {
+                            <tr class="table-row-hover" style="border-bottom: 1px solid var(--border-light); transition: background 0.15s;">
+                                <td style="padding: 1rem 1.5rem; font-weight: 700; color: var(--text-main); font-size: 0.9rem;">@app.JobTitle</td>
+                                <td style="padding: 1rem 0; color: var(--text-muted); font-size: 0.88rem;">@app.CompanyName</td>
+                                <td style="padding: 1rem 0; color: var(--text-muted); font-size: 0.88rem;">@app.AppliedDate.ToString("dd MMM yyyy")</td>
+                                <td style="padding: 1rem 0;">
+                                    @{
+                                        var mColor = app.MatchScore >= 80 ? "#10b981" : (app.MatchScore >= 50 ? "#f59e0b" : "#ef4444");
+                                    }
+                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <div style="width: 40px; height: 4px; background: #e2e8f0; border-radius: 99px; overflow: hidden;">
+                                            <div style="width: @app.MatchScore%; height: 100%; background: @mColor;"></div>
+                                        </div>
+                                        <span style="color: @mColor; font-size: 0.8rem; font-weight: 800;">@app.MatchScore.ToString("0")%</span>
+                                    </div>
+                                </td>
+                                <td style="padding: 1rem 1.5rem;">
+                                    @{
+                                        var statusColor = app.ApplicationStatus switch
+                                        {
+                                            "Applied" => "var(--text-muted)",
+                                            "UnderReview" => "#d97706",
+                                            "Shortlisted" => "#7c3aed",
+                                            "InterviewScheduled" => "#2563eb",
+                                            "OfferSent" => "#059669",
+                                            "Hired" => "#047857",
+                                            "Rejected" => "#dc2626",
+                                            "Withdrawn" => "#64748b",
+                                            _ => "var(--text-muted)"
+                                        };
+                                        var statusBg = app.ApplicationStatus switch
+                                        {
+                                            "Applied" => "#f1f5f9",
+                                            "UnderReview" => "#fef3c7",
+                                            "Shortlisted" => "#ede9fe",
+                                            "InterviewScheduled" => "#eff6ff",
+                                            "OfferSent" => "#d1fae5",
+                                            "Hired" => "#a7f3d0",
+                                            "Rejected" => "#fee2e2",
+                                            "Withdrawn" => "#f1f5f9",
+                                            _ => "#f1f5f9"
+                                        };
+                                    }
+                                    <span style="background: @statusBg; color: @statusColor; padding: 0.3rem 0.7rem; border-radius: 4px; font-size: 0.72rem; font-weight: 800; border: 1px solid rgba(0,0,0,0.03);">
+                                        @(app.ApplicationStatus == "UnderReview" ? "Under Review" : 
+                                          app.ApplicationStatus == "InterviewScheduled" ? "Interview" : 
+                                          app.ApplicationStatus == "OfferSent" ? "Offer Sent" : app.ApplicationStatus)
+                                    </span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+
+</div>

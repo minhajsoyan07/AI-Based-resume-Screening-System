@@ -1,0 +1,749 @@
+@model AIResumeScreeningSystem.DTOs.RecruiterRegisterDTO
+@{
+    ViewData["Title"] = "Employer Registration";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    /* Step Styling */
+    .step-section { display: none; }
+    .step-section.active { display: block; }
+
+    /* OTP Modal Styles */
+    .otp-modal-overlay {
+        position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.5);
+        display: none; align-items: center; justify-content: center;
+        z-index: 1000;
+    }
+    .otp-modal {
+        background: white; padding: 2rem; border-radius:2px;
+        text-align: center; width: 90%; max-width: 450px;
+        position: relative;
+    }
+    .otp-close {
+        position: absolute; top: 1rem; right: 1.5rem;
+        font-size: 1.5rem; cursor: pointer; color: #888;
+    }
+    .otp-title { font-size: 1.25rem; color: #333; margin-bottom: 0.5rem; font-weight: 600; line-height: 1.4; }
+    .otp-subtitle { color: #666; margin-bottom: 1.5rem; font-size: 0.9rem; }
+    .otp-inputs { display: flex; justify-content: center; gap: 0.6rem; margin-bottom: 1.5rem; }
+    .otp-input {
+        width: 44px; height: 52px; font-size: 1.6rem; font-weight: 700;
+        text-align: center; border: 2px solid #d1d5db; border-radius: 6px;
+        color: #1e293b; outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+        font-family: 'Courier New', monospace; caret-color: transparent;
+    }
+    .otp-input:focus {
+        border-color: var(--brand-primary);
+        box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
+    }
+    .otp-input.filled { border-color: #10b981; background: #f0fdf4; }
+    .btn-verify { background: var(--brand-primary); color: white; border: none; padding: 0.65rem 1.5rem; font-size: 1rem; border-radius:2px; cursor: pointer; font-weight: 600; }
+    .btn-verify:hover { background: var(--brand-dark); }
+    
+
+    /* Compacting Layout */
+    .form-group { margin-bottom: 0.5rem !important; }
+    .card-body { padding: 0.85rem 1.25rem !important; }
+    .grid-cols-2, .grid-cols-3 { gap: 0.5rem !important; }
+    
+    .card { border-radius:2px !important; overflow: hidden; }
+    .reg-card-header { background-color: var(--brand-primary) !important; border-bottom: 1px solid var(--brand-dark) !important; }
+    .reg-card-header h3 { color: #ffffff !important; font-size: 1rem !important; font-weight: 700 !important; margin: 0; }
+
+    /* Compact Upload Style */
+    .input-upload-group {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+    .input-upload-group .form-control {
+        padding-right: 80px;
+    }
+    .input-upload-group .btn-upload {
+        position: absolute;
+        right: 4px;
+        background: #F0FDFA;
+        color: var(--brand-primary);
+        border: 1px solid #CCFBF1;
+        padding: 4px 12px;
+        border-radius:2px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        z-index: 5;
+    }
+    .input-upload-group input[type="file"] {
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 100%;
+        opacity: 0;
+        cursor: pointer;
+        z-index: 10;
+    }
+
+    .section-title {
+        font-size: 1.1rem;
+        color: #333;
+        font-weight: 600;
+        margin: 1.5rem 0 1rem 0;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .tag-chip {
+        background: var(--brand-light); color: var(--brand-primary); padding: 0.25rem 0.75rem; border-radius:2px;
+        display: flex; align-items: center; gap: 0.25rem; font-size: 0.875rem; font-weight: 600; border: 1px solid #A7F3D0;
+    }
+    .tag-remove { cursor: pointer; color: #10B981; }
+
+    /* Instant Validation States */
+
+    /* Hide Scrollbar */
+    html, body {
+        scrollbar-width: none; /* Firefox */
+        -ms-overflow-style: none; /* IE and Edge */
+    }
+    html::-webkit-scrollbar, body::-webkit-scrollbar {
+        display: none; /* Chrome, Safari, and Edge */
+    }
+</style>
+
+<div class="container" style="padding-top: 0; padding-bottom: 2rem; margin-top: -1rem;">
+    <div class="reg-page-header">
+        <h1>Employer Registration</h1>
+        <p>Create your organization account to find the best talent</p>
+    </div>
+
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="alert" style="background:#fef2f2; color:#ef4444; padding:0.75rem; border-radius:2px; margin-bottom:1rem; border:1px solid #fca5a5; font-size:0.9rem;">
+            <div asp-validation-summary="All"></div>
+        </div>
+    }
+
+    <form asp-action="RecruiterRegister" method="post" id="regForm" enctype="multipart/form-data">
+        
+        <div id="step1" class="step-section active">
+            <div class="card" style="box-shadow:none; border: 1px solid var(--border-color); padding: 0; margin-bottom: 0.75rem;">
+                <div class="card-header reg-card-header">
+                    <h3>Account Info</h3>
+                </div>
+                <div class="card-body">
+                    <div class="grid-cols-3">
+                        <div class="form-group">
+                            <label class="form-label">User name <span class="required" style="color:red;">*</span></label>
+                            <input asp-for="FullName" class="form-control check-avail" data-type="username" placeholder="Enter your user name" required />
+                            <span asp-validation-for="FullName" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Password <span class="required" style="color:red;">*</span></label>
+                            <div style="position: relative; display: flex; align-items: center;">
+                                <input asp-for="Password" type="password" class="form-control" placeholder="Enter your password" minlength="6" required style="padding-right: 2.5rem;" />
+                                <button type="button" onclick="togglePasswordVisibility(this)" style="position: absolute; right: 10px; background: none; border: none; cursor: pointer; color: #64748b; padding: 0; display: flex; align-items: center; justify-content: center;">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                </button>
+                            </div>
+                            <span asp-validation-for="Password" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Confirm Password <span class="required" style="color:red;">*</span></label>
+                            <div style="position: relative; display: flex; align-items: center;">
+                                <input asp-for="ConfirmPassword" type="password" class="form-control" placeholder="Enter your confirm password" required style="padding-right: 2.5rem;" />
+                                <button type="button" onclick="togglePasswordVisibility(this)" style="position: absolute; right: 10px; background: none; border: none; cursor: pointer; color: #64748b; padding: 0; display: flex; align-items: center; justify-content: center;">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                </button>
+                            </div>
+                            <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="box-shadow:none; border: 1px solid var(--border-color); padding: 0;">
+                <div class="card-header reg-card-header">
+                    <h3>Contact Person's Info</h3>
+                </div>
+                <div class="card-body" style="padding: 1.25rem 1.5rem;">
+                    <div class="grid-cols-2">
+                        <div class="form-group">
+                            <label class="form-label">Name <span class="required" style="color:red;">*</span></label>
+                            <input asp-for="ContactName" class="form-control" placeholder="Enter your name" required />
+                            <span asp-validation-for="ContactName" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Designation <span class="required" style="color:red;">*</span></label>
+                            <input asp-for="Designation" class="form-control" placeholder="Enter your designation" required />
+                            <span asp-validation-for="Designation" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="grid-cols-2" style="margin-top: 0.25rem;">
+                        <div class="form-group">
+                            <label class="form-label">Email <span class="required" style="color:red;">*</span></label>
+                            <input asp-for="Email" type="email" class="form-control check-avail" data-type="email" placeholder="Enter your email" required />
+                            <span asp-validation-for="Email" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Mobile number <span class="required" style="color:red;">*</span></label>
+                            <input asp-for="PhoneNumber" class="form-control check-avail" data-type="phone" placeholder="01XXXXXXXXX" pattern="^01[3-9]\d{8}$" maxlength="11" oninput="this.value = this.value.replace(/[^0-9]/g, '');" required />
+                            <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="padding: 0.5rem 1.25rem 1rem 1.25rem; display: flex; justify-content: space-between; align-items: center;">
+                    <a href="@Url.Action("Index", "Home")" style="color: var(--brand-primary); text-decoration: none; font-size: 0.9rem;">Already have an account? Sign In</a>
+                    <button type="button" class="btn btn-primary" style="padding: 0.6rem 2rem; background: var(--brand-primary); border-radius:2px; font-weight: 600;" onclick="showOtp()">Next</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="step3" class="step-section">
+            <div class="card" style="box-shadow:none; border: 1px solid var(--border-color); padding: 0;">
+                <div class="card-header reg-card-header">
+                    <h3>Organization Info</h3>
+                </div>
+                <div class="card-body">
+                    
+                    <div class="grid-cols-2">
+                        <div class="form-group">
+                            <label class="form-label">Name of the organization <span class="required" style="color:red;">*</span></label>
+                            <input asp-for="CompanyName" class="form-control" placeholder="Enter your organization name" required />
+                            <span asp-validation-for="CompanyName" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Name of the organization (Bangla) <span class="required" style="color:red;">*</span></label>
+                            <input asp-for="CompanyNameBangla" class="form-control" placeholder="Enter your organization name(bangla)" required />
+                        </div>
+                    </div>
+
+                    <div class="grid-cols-2">
+                        <div class="form-group">
+                            <label class="form-label">Organization category <span class="required" style="color:red;">*</span></label>
+                            <select asp-for="OrganizationCategory" class="form-control" required>
+                                <option value="">Select category</option>
+                                <option value="Government">Government</option>
+                                <option value="Semi Government">Semi Government</option>
+                                <option value="Private Firm">Private Firm</option>
+                                <option value="NGO">NGO/Development Sector</option>
+                                <option value="International">International Organization</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Industry Type <span class="required" style="color:red;">*</span></label>
+                            <select asp-for="IndustryType" class="form-control" required>
+                                <option value="">Select industry type</option>
+                                <option value="IT">IT & Software</option>
+                                <option value="Education">Education/Research</option>
+                                <option value="Finance">Finance/Banking</option>
+                                <option value="Healthcare">Healthcare/Medical</option>
+                                <option value="Manufacturing">Manufacturing/Garments</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid-cols-2">
+                        <div class="form-group">
+                            <label class="form-label">Website address</label>
+                            <input asp-for="CompanyWebsite" class="form-control" placeholder="Website address" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Organization tags</label>
+                            <div class="tag-input-container" style="min-height: 40px; display:flex; flex-wrap:wrap; gap:0.5rem; padding:0.4rem; border:1px solid #d1d5db; border-radius:2px; align-items:center;">
+                                <div id="tags-wrapper" style="display:flex; gap:0.4rem; flex-wrap:wrap;"></div>
+                                <input type="text" id="tagger" placeholder="Type and press enter" style="border:none; outline:none; font-size:0.9rem; flex:1;" />
+                            </div>
+                            <input type="hidden" asp-for="Tags" id="hidden-tags" />
+                        </div>
+                    </div>
+
+                    <div class="grid-cols-2">
+                        <div class="form-group">
+                            <label class="form-label">Organization tagline</label>
+                            <input asp-for="Tagline" class="form-control" placeholder="Enter your organization tagline" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Logo <span class="required" style="color:red;">*</span></label>
+                            <div class="input-upload-group">
+                                <input type="text" class="form-control" placeholder="Upload your logo" id="logoText" readonly />
+                                <button type="button" class="btn-upload">Upload</button>
+                                <input asp-for="LogoFile" type="file" accept="image/*" required onchange="document.getElementById('logoText').value = this.files[0].name" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid-cols-2">
+                        <div class="form-group">
+                            <label class="form-label">Cover photo</label>
+                            <div class="input-upload-group">
+                                <input type="text" class="form-control" placeholder="Upload cover photo" id="coverText" readonly />
+                                <button type="button" class="btn-upload">Upload</button>
+                                <input asp-for="CoverPhotoFile" type="file" accept="image/*" onchange="document.getElementById('coverText').value = this.files[0].name" />
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Signature</label>
+                            <div class="input-upload-group">
+                                <input type="text" class="form-control" placeholder="Upload signature" id="sigText" readonly />
+                                <button type="button" class="btn-upload">Upload</button>
+                                <input asp-for="SignatureFile" type="file" accept="image/*" onchange="document.getElementById('sigText').value = this.files[0].name" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid-cols-2">
+                        <div class="form-group">
+                            <label class="form-label">Establishment year <span class="required" style="color:red;">*</span></label>
+                            <input asp-for="EstablishmentYear" type="number" class="form-control" placeholder="YYYY" required />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Organization size</label>
+                            <select asp-for="CompanySize" class="form-control">
+                                <option value="">Select size</option>
+                                <option value="1-10">1-10 employees</option>
+                                <option value="11-50">11-50 employees</option>
+                                <option value="51-200">51-200 employees</option>
+                                <option value="200+">200+ employees</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Organization email <span class="required" style="color:red;">*</span></label>
+                        <input asp-for="OrganizationEmail" class="form-control" placeholder="Enter your organization email" required />
+                    </div>
+
+                    <div class="grid-cols-2">
+                        <div class="form-group">
+                            <label class="form-label">About Organization <span class="required" style="color:red;">*</span></label>
+                            <textarea asp-for="AboutOrganization" class="form-control" rows="2" placeholder="About your organization" required></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Vision of the organization <span class="required" style="color:red;">*</span></label>
+                            <textarea asp-for="Vision" class="form-control" rows="2" placeholder="Your vision" required></textarea>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Mission of the organization <span class="required" style="color:red;">*</span></label>
+                        <textarea asp-for="Mission" class="form-control" rows="2" placeholder="Your mission" required></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Location Section -->
+            <div class="card" style="box-shadow:none; border: 1px solid var(--border-color); padding: 0; margin-top: 0.75rem;">
+                <div class="card-header reg-card-header">
+                    <h3>Location Info</h3>
+                </div>
+                <div class="card-body">
+                    <div class="grid-cols-2">
+                        <div class="form-group">
+                            <label class="form-label">Division <span class="required" style="color:red;">*</span></label>
+                            <select asp-for="Division" id="divSelect" class="form-control" required>
+                                <option value="">Select division</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">District <span class="required" style="color:red;">*</span></label>
+                            <select asp-for="District" id="distSelect" class="form-control" required disabled>
+                                <option value="">Select district</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid-cols-2">
+                        <div class="form-group">
+                            <label class="form-label">Thana <span class="required" style="color:red;">*</span></label>
+                            <select asp-for="Thana" id="thanaSelect" class="form-control" required disabled>
+                                <option value="">Select thana</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Postal code <span class="required" style="color:red;">*</span></label>
+                            <input asp-for="PostalCode" class="form-control" placeholder="Postal code" required />
+                        </div>
+                    </div>
+
+                    <div class="grid-cols-2">
+                        <div class="form-group">
+                            <label class="form-label">Organization full address <span class="required" style="color:red;">*</span></label>
+                            <textarea asp-for="FullAddress" class="form-control" rows="2" placeholder="Full address" required></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Full address in bangla <span class="required" style="color:red;">*</span></label>
+                            <textarea asp-for="FullAddressBangla" class="form-control" rows="2" placeholder="পূর্ণ ঠিকানা বাংলা" required></textarea>
+                        </div>
+                    </div>
+
+                    <div class="grid-cols-2">
+                        <div class="form-group">
+                            <label class="form-label">Organization mobile number <span class="required" style="color:red;">*</span></label>
+                            <input asp-for="OrganizationMobile" class="form-control" placeholder="Organization mobile" required />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Organization land phone</label>
+                            <input asp-for="LandPhoneNumber" class="form-control" placeholder="Land phone number" />
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 1.5rem; text-align: right;">
+                        <button type="submit" class="btn btn-primary" style="padding: 0.7rem 2.5rem; background: var(--brand-primary); font-weight: 700; border-radius:2px; border: none;">SAVE CHANGE</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- OTP Modal -->
+        <div class="otp-modal-overlay" id="otpModal">
+            <div class="otp-modal">
+                <div class="otp-close" onclick="closeOtp()">✕</div>
+                <div class="otp-title">Verify Your Email</div>
+                <div class="otp-subtitle">We have sent a 6-digit OTP to your email.</div>
+                
+                <div class="otp-inputs" id="otpBoxes">
+                    <input type="text" class="otp-input" maxlength="1" inputmode="numeric" id="otp0">
+                    <input type="text" class="otp-input" maxlength="1" inputmode="numeric" id="otp1">
+                    <input type="text" class="otp-input" maxlength="1" inputmode="numeric" id="otp2">
+                    <input type="text" class="otp-input" maxlength="1" inputmode="numeric" id="otp3">
+                    <input type="text" class="otp-input" maxlength="1" inputmode="numeric" id="otp4">
+                    <input type="text" class="otp-input" maxlength="1" inputmode="numeric" id="otp5">
+                </div>
+
+                <div style="display: flex; justify-content: center; align-items: center; gap: 1.5rem;">
+                    <span style="color:#666; cursor:pointer; font-size:0.9rem;" onclick="showOtp()">Resend OTP</span>
+                    <button type="button" class="btn-verify" onclick="verifyOtpAndProceed()">Verify</button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        // ── 1. LOCATION DATA (BANGLADESH) ──
+        const locations = {
+            "Dhaka": {
+                "Dhaka": ["Uttara North", "Uttara South", "Gulshan", "Tejgaon", "Motijheel", "Paltan", "Ramna", "Mohammadpur", "Dhanmondi", "Sher-e-Bangla Nagar"],
+                "Gazipur": ["Gazipur Sadar", "Tongi", "Kaliakair", "Kapasia", "Sreepur"],
+                "Narayanganj": ["Narayanganj Sadar", "Araihazar", "Bandar", "Rupganj", "Sonargaon"],
+                "Narsingdi": ["Narsingdi Sadar", "Belabo", "Monohardi", "Palash", "Raipura", "Shibpur"],
+                "Faridpur": ["Faridpur Sadar", "Alfadanga", "Bhanga", "Charbhadrasan", "Madhukhali", "Nagarkanda", "Sadarpur", "Saltha"],
+                "Rajbari": ["Rajbari Sadar", "Baliakandi", "Goalanda", "Pangsha", "Kalukhali"],
+                "Madaripur": ["Madaripur Sadar", "Kalkini", "Rajoir", "Shibchar"],
+                "Gopalganj": ["Gopalganj Sadar", "Kashiani", "Kotalipara", "Tungipara"],
+                "Shariatpur": ["Shariatpur Sadar", "Bhedarganj", "Damudya", "Naria", "Zanjira", "Gosairhat"],
+                "Kishoreganj": ["Kishoreganj Sadar", "Austagram", "Bajitpur", "Bhairab", "Hossainpur", "Itna", "Karimganj", "Katiadi", "Mithamoin", "Nikli", "Pakundia", "Tarail"],
+                "Tangail": ["Tangail Sadar", "Basail", "Bhuapur", "Delduar", "Dhanbari", "Ghatail", "Gopalpur", "Madhupur", "Mirzapur", "Nagarpur", "Sakhipur"]
+            },
+            "Chattogram": {
+                "Chattogram": ["Double Mooring", "Chandgaon", "Kotwali", "Bandar", "Pahartali", "Panchlaish", "Patenga", "Halishahar", "Anwara", "Banshkhali", "Boalkhali", "Fatikchhari", "Hathazari", "Lohagara", "Mirsharai", "Patiya", "Rangunia", "Raozan", "Sandwip", "Sitakunda"],
+                "Cox's Bazar": ["Cox's Bazar Sadar", "Chakaria", "Kutubdia", "Maheshkhali", "Pekua", "Ramu", "Teknaf", "Ukhia", "Eidgaon"],
+                "Comilla": ["Comilla Sadar", "Barura", "Brahmanpara", "Burichong", "Chandina", "Chauddagram", "Cumilla Adarsha Sadar", "Daudkandi", "Debidwar", "Homna", "Laksam", "Lalmai", "Meghna", "Monoharganj", "Muradnagar", "Nangalkot", "Titash"],
+                "Chandpur": ["Chandpur Sadar", "Faridganj", "Haimchar", "Hajiganj", "Kachua", "Matlab Dakshin", "Matlab Uttar", "Shahrasti"],
+                "Brahmanbaria": ["Brahmanbaria Sadar", "Akhaura", "Ashuganj", "Bancharampur", "Bijoynagar", "Kasba", "Nabinagar", "Nasirnagar", "Sarail"],
+                "Khagrachhari": ["Khagrachhari Sadar", "Dighinala", "Lakshmichhari", "Mahalchhari", "Manikchhari", "Matiranga", "Panchhari", "Ramgarh"],
+                "Panchagarh": ["Panchagarh Sadar", "Atwari", "Boda", "Debiganj", "Tetulia"],
+                "Rangamati": ["Rangamati Sadar", "Baghaichari", "Barkal", "Belai Chhari", "Juraichhari", "Kaptai", "Kawkhali", "Langadu", "Naniarchar", "Rajasthali"],
+                "Lakshmipur": ["Lakshmipur Sadar", "Kamalnagar", "Raipur", "Ramganj", "Ramgati"],
+                "Noakhali": ["Noakhali Sadar", "Begumganj", "Chatkhil", "Companiganj", "Hatia", "Kabirhat", "Kabonbari", "Senbagh", "Sonaimuri", "Subarnachar"]
+            },
+            "Rajshahi": {
+                "Rajshahi": ["Boalia", "Charghat", "Durgapur", "Godagari", "Mohanpur", "Paba", "Puthia", "Tanore"],
+                "Bogura": ["Bogura Sadar", "Dhunat", "Dhupchanchia", "Gabtali", "Kahaloo", "Nandigram", "Sariakandi", "Shajahanpur", "Sherpur", "Shibganj"],
+                "Joypurhat": ["Joypurhat Sadar", "Akkelpur", "Kalai", "Khetlal", "Panchbibi"],
+                "Chapainawabganj": ["Chapainawabganj Sadar", "Bholahat", "Gomostapur", "Nachole", "Shibganj"],
+                "Naogaon": ["Naogaon Sadar", "Atrai", "Badalgachhi", "Dhamoirhat", "Manda", "Mahadevpur", "Niamatpur", "Patnitala", "Porsha", "Raninagar", "Sapahar"],
+                "Natore": ["Natore Sadar", "Baraigram", "Gurudaspur", "Lalpur", "Natore", "Singra"],
+                "Sirajganj": ["Sirajganj Sadar", "Belkuchi", "Chauhali", "Kamarkhanda", "Kazipur", "Raiganj", "Shahjadpur", "Tarash", "Ullapara"],
+                "Pabna": ["Pabna Sadar", "Atgharia", "Bera", "Bhangura", "Chatmohar", "Faridpur", "Ishwardi", "Santhia", "Sujanagar"],
+                "Natore": ["Natore Sadar", "Baraigram", "Gurudaspur", "Lalpur", "Natore", "Singra"]
+            },
+            "Khulna": {
+                "Khulna": ["Khulna Sadar", "Bataghat", "Daulatpur", "Dumuria", "Dighalia", "Koyra", "Paikgachha", "Phultala", "Rupsa", "Terokhada"],
+                "Bagerhat": ["Bagerhat Sadar", "Chitalmari", "Fakirhat", "Kachua", "Mollahat", "Mongla", "Morrelganj", "Rampal", "Sarankhola"],
+                "Satkhira": ["Satkhira Sadar", "Assasuni", "Debhata", "Kalaroa", "Kaliganj", "Shyamnagar", "Tala"],
+                "Kushtia": ["Kushtia Sadar", "Bheramara", "Daulatpur", "Khoksa", "Kumarkhali", "Mirpur"],
+                "Chuadanga": ["Chuadanga Sadar", "Alamdanga", "Damurhuda", "Jibannagar"],
+                "Meherpur": ["Meherpur Sadar", "Gangni", "Mujibnagar"],
+                "Narail": ["Narail Sadar", "Kaliakair", "Lohagara"],
+                "Jhenaidah": ["Jhenaidah Sadar", "Harinakunda", "Kaliganj", "Kotchandpur", "Maheshpur", "Shailkupa"],
+                "Magura": ["Magura Sadar", "Mohammadpur", "Sreepur"],
+                "Kurigram": ["Kurigram Sadar", "Bhurungamari", "Char Rajibpur", "Chilmari", "Phulbari", "Raomari", "Rajarhat", "Ulipur", "Rowmari"],
+                "Gaibandha": ["Gaibandha Sadar", "Fulchhari", "Gobindaganj", "Palashbari", "Sadullapur", "Saghata", "Sundarganj"],
+                "Lalmonirhat": ["Lalmonirhat Sadar", "Aditmari", "Hatibandha", "Kaliganj", "Patgram"],
+                "Nilphamari": ["Nilphamari Sadar", "Dimla", "Domar", "Jaldhaka", "Kishoreganj"],
+                "Panchagarh": ["Panchagarh Sadar", "Atwari", "Boda", "Debiganj", "Tetulia"],
+                "Rangpur": ["Rangpur Sadar", "Badarganj", "Gangachara", "Kaunia", "Mithapukur", "Pirgachha", "Pirganj", "Rangpur Sadar", "Taraganj"],
+                "Thakurgaon": ["Thakurgaon Sadar", "Baliadangi", "Haripur", "Pirganj", "Ranisankail"],
+                "Dinajpur": ["Dinajpur Sadar", "Birampur", "Birganj", "Biral", "Bochaganj", "Chirirbandar", "Fulbari", "Ghoraghat", "Hakimpur", "Kaharole", "Khansama", "Nawabganj", "Parbatipur"],
+                "Kishoreganj": ["Kishoreganj Sadar", "Austagram", "Bajitpur", "Bhairab", "Hossainpur", "Itna", "Karimganj", "Katiadi", "Mithamoin", "Nikli", "Pakundia", "Tarail"]
+            },
+            "Barishal": {
+                "Barishal": ["Barishal Sadar", "Bakerganj", "Banari Para", "Gauranadi", "Hizla", "Mehendiganj", "Muladi", "Wazirpur"],
+                "Bhola": ["Bhola Sadar", "Borhanuddin", "Char Fashion", "Daulatkhan", "Lalmohan", "Manpura", "Tazumuddin"],
+                "Jhalokathi": ["Jhalokathi Sadar", "Kathalia", "Nalchity", "Rajapur"],
+                "Patuakhali": ["Patuakhali Sadar", "Bauphal", "Dashmina", "Dumki", "Galachipa", "Kalapara", "Mirzaganj", "Rangabali"],
+                "Pirojpur": ["Pirojpur Sadar", "Bhandaria", "Kawkhali", "Mathbaria", "Nazirpur", "Nesarabad", "Zianagar"],
+                "Barguna": ["Barguna Sadar", "Amtali", "Bamna", "Betagi", "Patharghata"]
+            },
+            "Sylhet": {
+                "Sylhet": ["Sylhet Sadar", "Beanibazar", "Bishwanath", "Companiganj", "Fenchuganj", "Golapganj", "Gowainghat", "Jaintiapur", "Kanaighat", "Zakiganj"],
+                "Moulvibazar": ["Moulvibazar Sadar", "Barlekha", "Juri", "Kamalganj", "Rajnagar", "Sreemangal"],
+                "Habiganj": ["Habiganj Sadar", "Ajmiriganj", "Baniachang", "Bahubal", "Lakhai", "Madhabpur", "Nabiganj", "Sayestaganj"],
+                "Sunamganj": ["Sunamganj Sadar", "Dakshin Sunamganj", "Derai", "Dharmapasha", "Dowarabazar", "Jagannathpur", "Jamalganj", "Sulla", "Tahirpur"]
+            },
+            "Mymensingh": {
+                "Mymensingh": ["Mymensingh Sadar", "Bhaluka", "Dhobaura", "Fulbaria", "Gaffargaon", "Gauripur", "Haluaghat", "Ishwarganj", "Muktagacha", "Nandail", "Phulpur", "Trishal"],
+                "Jamalpur": ["Jamalpur Sadar", "Bakshiganj", "Dewanganj", "Islampur", "Jamalpur", "Madarganj", "Melandaha", "Sarishabari"],
+                "Sherpur": ["Sherpur Sadar", "Jhenaigati", "Nakla", "Nalitabari", "Sreebardhi"],
+                "Netrokona": ["Netrokona Sadar", "Atpara", "Barhatta", "Durgapur", "Kalmakanda", "Kendua", "Khaliajuri", "Madan", "Mohanganj", "Purbadhala"]
+            }
+        };
+
+        const divSelect = document.getElementById('divSelect');
+        const distSelect = document.getElementById('distSelect');
+        const thanaSelect = document.getElementById('thanaSelect');
+
+        // Populate Divisions
+        Object.keys(locations).forEach(div => {
+            divSelect.add(new Option(div, div));
+        });
+
+        divSelect.onchange = function() {
+            distSelect.innerHTML = '<option value="">Select district</option>';
+            thanaSelect.innerHTML = '<option value="">Select thana</option>';
+            thanaSelect.disabled = true;
+            if (this.value) {
+                distSelect.disabled = false;
+                Object.keys(locations[this.value]).forEach(dist => {
+                    distSelect.add(new Option(dist, dist));
+                });
+            } else {
+                distSelect.disabled = true;
+            }
+        };
+
+        distSelect.onchange = function() {
+            thanaSelect.innerHTML = '<option value="">Select thana</option>';
+            if (this.value) {
+                thanaSelect.disabled = false;
+                const thanas = locations[divSelect.value][this.value];
+                thanas.forEach(th => {
+                    thanaSelect.add(new Option(th, th));
+                });
+            } else {
+                thanaSelect.disabled = true;
+            }
+        };
+
+        // ── 2. INSTANT AJAX VALIDATION ──
+        let debounceTimer;
+        $('.check-avail').on('input', function() {
+            const input = $(this);
+            const type = input.data('type');
+            const val = input.val();
+            const errorSpan = input.siblings('.text-danger');
+
+            // Quick regex check for username (FullName)
+            if (type === 'username') {
+                const regex = /^[a-zA-Z0-9]+$/;
+                if (val && !regex.test(val)) {
+                    input.addClass('is-invalid');
+                    errorSpan.text("User name can only contain letters and numbers (no spaces or special characters)").show();
+                    return;
+                }
+            }
+
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                if (!val || (val.length < 3 && type !== 'phone')) {
+                    if (type === 'username' && !val) {
+                        errorSpan.hide();
+                        input.removeClass('is-invalid');
+                    }
+                    return;
+                }
+                
+                fetch(`/Auth/CheckAvailability?type=${type}&value=${val}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        if (!data.available) {
+                            input.addClass('is-invalid');
+                            errorSpan.text(`This ${type} is already registered`).show();
+                        } else {
+                            input.removeClass('is-invalid');
+                            errorSpan.hide();
+                        }
+                    });
+            }, 500);
+        });
+
+        // ── 3. STEP TRANSITIONS & OTP ──
+        function showOtp() {
+            const form = $('#regForm');
+            const isValid = form.valid();
+            const hasAvailErrors = $('.is-invalid').filter(':visible').length > 0;
+
+            if (isValid && !hasAvailErrors) {
+                const email = document.getElementById('Email').value;
+                const btn = document.querySelector('button[onclick="showOtp()"]');
+                const oldText = btn.innerHTML;
+                btn.innerHTML = 'Sending...';
+                btn.disabled = true;
+
+                fetch('/api/auth/send-otp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email })
+                })
+                .then(r => r.json())
+                .then(data => {
+                    btn.innerHTML = oldText;
+                    btn.disabled = false;
+                    if (data.success) {
+                        document.getElementById('otpModal').style.display = 'flex';
+                        for (let i = 0; i < 6; i++) {
+                            document.getElementById('otp' + i).value = '';
+                        }
+                        document.getElementById('otp0').focus();
+                    } else {
+                        alert(data.message || 'Failed to send OTP.');
+                    }
+                })
+                .catch(err => {
+                    btn.innerHTML = oldText;
+                    btn.disabled = false;
+                    alert('Error sending OTP.');
+                });
+            } else {
+                // Find first error and scroll
+                const firstError = $('.input-validation-error, .is-invalid').filter(':visible').first();
+                if (firstError.length) {
+                    $('html, body').animate({
+                        scrollTop: firstError.offset().top - 150
+                    }, 500);
+                    firstError.focus();
+                } else if (!isValid) {
+                    // Fallback for hidden errors or general invalidity
+                    alert("Please fill in all required fields correctly.");
+                }
+            }
+        }
+        function closeOtp() { document.getElementById('otpModal').style.display = 'none'; }
+
+        // ── Robust OTP Input Handler (supports typing, paste, backspace) ──
+        (function initOtpInputs() {
+            const boxes = Array.from(document.querySelectorAll('#otpBoxes .otp-input'));
+
+            boxes.forEach(function(box, idx) {
+                box.addEventListener('keydown', function(e) {
+                    const allowedKeys = ['Backspace','Delete','Tab','ArrowLeft','ArrowRight','ArrowUp','ArrowDown'];
+                    if (allowedKeys.includes(e.key)) {
+                        if (e.key === 'Backspace' || e.key === 'Delete') {
+                            e.preventDefault();
+                            box.value = '';
+                            box.classList.remove('filled');
+                            if (idx > 0) boxes[idx - 1].focus();
+                        }
+                        return;
+                    }
+                    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v') return;
+                    if (!/^[0-9]$/.test(e.key)) { e.preventDefault(); return; }
+                });
+
+                box.addEventListener('input', function() {
+                    const val = box.value.replace(/[^0-9]/g, '');
+                    box.value = val ? val[val.length - 1] : '';
+                    if (box.value) {
+                        box.classList.add('filled');
+                        if (idx < boxes.length - 1) boxes[idx + 1].focus();
+                    } else {
+                        box.classList.remove('filled');
+                    }
+                });
+
+                // ── PASTE HANDLER ──
+                box.addEventListener('paste', function(e) {
+                    e.preventDefault();
+                    const pasted = (e.clipboardData || window.clipboardData)
+                        .getData('text')
+                        .replace(/[^0-9]/g, '')
+                        .slice(0, 6);
+                    if (!pasted) return;
+                    boxes.forEach(function(b) { b.value = ''; b.classList.remove('filled'); });
+                    for (let i = 0; i < pasted.length; i++) {
+                        boxes[i].value = pasted[i];
+                        boxes[i].classList.add('filled');
+                    }
+                    const nextEmpty = boxes.find(function(b) { return !b.value; });
+                    (nextEmpty || boxes[boxes.length - 1]).focus();
+                    if (pasted.length === 6) verifyOtpAndProceed();
+                });
+
+                box.addEventListener('focus', function() { box.select(); });
+            });
+        })();
+
+        function verifyOtpAndProceed() {
+            const otp = Array.from({length: 6}, (_, i) => document.getElementById('otp' + i).value).join('');
+            if (otp.length !== 6 || !/^\d{6}$/.test(otp)) {
+                document.querySelectorAll('#otpBoxes .otp-input').forEach(b => {
+                    b.style.borderColor = '#ef4444';
+                    setTimeout(() => { b.style.borderColor = ''; }, 1500);
+                });
+                return;
+            }
+
+            const email = document.getElementById('Email').value;
+            const btn = document.querySelector('.btn-verify');
+            const oldText = btn.innerHTML;
+            btn.innerHTML = 'Verifying...';
+            btn.disabled = true;
+
+            fetch('/api/auth/verify-otp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: email, otp: otp })
+            })
+            .then(r => r.json())
+            .then(data => {
+                btn.innerHTML = oldText;
+                btn.disabled = false;
+                if (data.success) {
+                    closeOtp();
+                    document.getElementById('step1').classList.remove('active');
+                    document.getElementById('step3').classList.add('active');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                } else {
+                    alert(data.message || 'Invalid OTP.');
+                }
+            })
+            .catch(err => {
+                btn.innerHTML = oldText;
+                btn.disabled = false;
+                alert('Error verifying OTP.');
+            });
+        }
+
+        // ── 4. TAGS & UPLOAD ──
+        const tagger = document.getElementById('tagger');
+        let tags = [];
+        tagger.onkeydown = function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const v = this.value.trim();
+                if (v && !tags.includes(v)) {
+                    tags.push(v);
+                    const chip = document.createElement('div');
+                    chip.className = 'tag-chip';
+                    chip.innerHTML = `${v} <span class="tag-remove" onclick="this.parentElement.remove(); tags=tags.filter(t=>t!=='${v}'); document.getElementById('hidden-tags').value=tags.join(',');">&times;</span>`;
+                    document.getElementById('tags-wrapper').appendChild(chip);
+                    document.getElementById('hidden-tags').value = tags.join(',');
+                }
+                this.value = '';
+            }
+        };
+    </script>
+}

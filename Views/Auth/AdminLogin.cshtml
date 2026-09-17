@@ -1,0 +1,273 @@
+@model AIResumeScreeningSystem.DTOs.LoginDTO
+@{ ViewData["Title"] = "Admin Login"; Layout = null; }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Admin Login — ResuMatch</title>
+    <link rel="icon" type="image/svg+xml" href="~/images/favicon.svg"/>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/css/site.css"/>
+    <style>
+        :root {
+            --primary: #4F46E5;
+            --primary-hover: #4338CA;
+            --surface: #ffffff;
+            --background: #f1f5f9;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --input-bg: #ffffff;
+        }
+
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 1rem;
+            background-color: var(--background);
+            font-family: 'Inter', 'Plus Jakarta Sans', sans-serif;
+            color: var(--text-main);
+        }
+
+        .login-wrapper {
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .login-card {
+            background: var(--surface);
+            border-radius: 4px;
+            padding: 2.5rem 2rem;
+            border: 1px solid var(--border);
+            position: relative;
+        }
+
+        /* Top brand accent line */
+        .login-card::before {
+            content: '';
+            position: absolute;
+            top: -1px;
+            left: -1px;
+            right: -1px;
+            height: 3px;
+            background: var(--primary);
+            border-radius: 4px 4px 0 0;
+        }
+
+        .logo-container {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 1.5rem;
+            background: #eef2ff;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+            border: 1px solid #e0e7ff;
+        }
+
+        .header-text {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header-text h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin: 0 0 0.5rem;
+            letter-spacing: -0.025em;
+        }
+
+        .header-text p {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin: 0;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.625rem 0.875rem;
+            font-size: 0.875rem;
+            font-family: inherit;
+            color: var(--text-main);
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: 2px;
+            transition: border-color 0.15s;
+            box-sizing: border-box;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .form-control::placeholder {
+            color: #cbd5e1;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 1rem;
+            height: 1rem;
+            border-radius: 2px;
+            border: 1px solid var(--border);
+            accent-color: var(--primary);
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            font-size: 0.8125rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 0.75rem;
+            font-size: 0.875rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+            font-family: inherit;
+            color: white;
+            background: var(--primary);
+            border: none;
+            border-radius: 2px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .btn-submit:hover {
+            background: var(--primary-hover);
+        }
+
+        .validation-box {
+            background: #fef2f2;
+            border: 1px solid #fee2e2;
+            color: #b91c1c;
+            padding: 0.75rem;
+            border-radius: 2px;
+            margin-bottom: 1.5rem;
+            font-size: 0.8125rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 1.5rem;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.15s;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .back-link:hover {
+            color: var(--primary);
+        }
+    </style>
+</head>
+<body>
+    <div class="login-wrapper">
+        <div class="login-card">
+            <div class="logo-container">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                    <path d="M12 12v.01"/>
+                </svg>
+            </div>
+            
+            <div class="header-text">
+                <h1>Admin Portal</h1>
+                <p>Secure system access for administrators</p>
+            </div>
+
+            <form asp-action="AdminLogin" asp-controller="Auth" method="post">
+                @Html.AntiForgeryToken()
+                
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div class="validation-box">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink: 0;">
+                            <circle cx="12" cy="12" r="10"/>
+                            <line x1="12" y1="8" x2="12" y2="12"/>
+                            <line x1="12" y1="16" x2="12.01" y2="16"/>
+                        </svg>
+                        <div asp-validation-summary="All" style="list-style: none; padding: 0; margin: 0;"></div>
+                    </div>
+                }
+
+                <div class="form-group">
+                    <label class="form-label" asp-for="Email">Admin Email</label>
+                    <input type="email" asp-for="Email" class="form-control" placeholder="admin@email.com" required autofocus autocomplete="username" />
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" asp-for="Password">Password</label>
+                    <div style="position: relative; display: flex; align-items: center;">
+                        <input type="password" asp-for="Password" class="form-control" placeholder="••••••••" required autocomplete="current-password" style="padding-right: 2.5rem;" />
+                        <button type="button" onclick="togglePasswordVisibility(this)" style="position: absolute; right: 10px; background: none; border: none; cursor: pointer; color: #64748b; padding: 0; display: flex; align-items: center; justify-content: center;">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" asp-for="RememberMe" id="rememberMe" />
+                    <label for="rememberMe">Remember this device</label>
+                </div>
+
+                <button type="submit" class="btn-submit">
+                    Sign In to Dashboard
+                </button>
+            </form>
+        </div>
+
+        <a href="/Auth/Login" class="back-link">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"/>
+                <polyline points="12 19 5 12 12 5"/>
+            </svg>
+            Back to Role Selection
+        </a>
+    </div>
+    <script src="~/js/site.js"></script>
+</body>
+</html>

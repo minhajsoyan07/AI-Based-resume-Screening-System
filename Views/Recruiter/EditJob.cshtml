@@ -1,0 +1,177 @@
+@model AIResumeScreeningSystem.DTOs.JobCreateDTO
+@{ 
+    ViewData["Title"] = "Edit Job";
+    Layout = "~/Views/Shared/_RecruiterLayout.cshtml";
+}
+
+<div class="r-page-header-row">
+    <div>
+        <h1 style="font-size:1.75rem; font-weight:800; color:#1A202C; margin:0 0 0.25rem;">Edit Vacancy</h1>
+        <p style="color:#777; margin:0; font-size:0.95rem;">Update details for "@Model.JobTitle"</p>
+    </div>
+    <a href="/Recruiter/Jobs" class="r-btn r-btn-secondary">← Back to Jobs</a>
+</div>
+
+<div style="display:grid; grid-template-columns:1fr 320px; gap:2rem; align-items:start;">
+    <!-- Main Form -->
+    <div class="r-card">
+        <form method="post" asp-action="EditJob" asp-route-jobId="@ViewBag.JobId" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="All" style="background:#FEF2F2; border:1px solid #FECACA; border-radius:2px; padding:0.875rem 1rem; margin-bottom:1.5rem; color:#B91C1C; font-size:0.875rem;"></div>
+
+            <!-- Row 1: Title & Location -->
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.25rem; margin-bottom:1.5rem;">
+                <div class="r-form-group" style="margin:0;">
+                    <label class="r-form-label">Job Title *</label>
+                    <input asp-for="JobTitle" class="r-form-control" required/>
+                </div>
+                <div class="r-form-group" style="margin:0;">
+                    <label class="r-form-label">Work Location</label>
+                    <input asp-for="JobLocation" class="r-form-control" placeholder="e.g. Remote, Dhaka"/>
+                </div>
+            </div>
+
+            <!-- Row 2: Description -->
+            <div class="r-form-group">
+                <label class="r-form-label">Job Description *</label>
+                <textarea asp-for="JobDescription" class="r-form-control" rows="8" required></textarea>
+            </div>
+
+            <!-- Row 3: Skills -->
+            <div class="r-form-group">
+                <label class="r-form-label">Required Skills * <span style="font-weight:400; color:#999;">(comma-separated)</span></label>
+                <input asp-for="RequiredSkills" class="r-form-control" placeholder="e.g. Python, SQL, React" required/>
+                <div style="font-size:0.8rem; color:#999; margin-top:0.35rem;">Updating these will trigger a re-analysis of current candidates</div>
+            </div>
+
+            <!-- Row 4: Exp, Edu, Type, Sector -->
+            <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:1.25rem; margin-bottom:1.5rem;">
+                <div class="r-form-group" style="margin:0;">
+                    <label class="r-form-label">Min Experience</label>
+                    <input asp-for="MinimumExperience" type="number" class="r-form-control" min="0"/>
+                </div>
+                <div class="r-form-group" style="margin:0;">
+                    <label class="r-form-label">Education</label>
+                    <select asp-for="EducationLevel" class="r-form-control">
+                        <option value="">Any Level</option>
+                        <option value="High School">High School</option>
+                        <option value="Diploma">Diploma</option>
+                        <option value="BSc">Bachelor's</option>
+                        <option value="MSc">Master's</option>
+                        <option value="PhD">PhD</option>
+                    </select>
+                </div>
+                <div class="r-form-group" style="margin:0;">
+                    <label class="r-form-label">Job Type</label>
+                    <select asp-for="JobType" class="r-form-control">
+                        <option value="Full-time">Full-time</option>
+                        <option value="Part-time">Part-time</option>
+                        <option value="Contract">Contract</option>
+                        <option value="Internship">Internship</option>
+                        <option value="Remote">Remote</option>
+                    </select>
+                </div>
+                <div class="r-form-group" style="margin:0;">
+                    <label class="r-form-label">Job Sector</label>
+                    <select asp-for="JobSector" class="r-form-control">
+                        <option value="Private">Private</option>
+                        <option value="Govt">Govt.</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Row 5: Salary & Deadline -->
+            <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:1.25rem; margin-bottom:2rem;">
+                <div class="r-form-group" style="margin:0;">
+                    <label class="r-form-label">Min Salary (BDT)</label>
+                    <input asp-for="SalaryMin" type="number" class="r-form-control"/>
+                </div>
+                <div class="r-form-group" style="margin:0;">
+                    <label class="r-form-label">Max Salary (BDT)</label>
+                    <input asp-for="SalaryMax" type="number" class="r-form-control"/>
+                </div>
+                <div class="r-form-group" style="margin:0;">
+                    <label class="r-form-label">Deadline</label>
+                    <input asp-for="ApplicationDeadline" type="date" class="r-form-control"/>
+                </div>
+            </div>
+
+            <!-- Attachment Section -->
+            <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:2px; padding:1.25rem; margin-bottom:2rem;">
+                <label class="r-form-label" style="margin-bottom:1rem; display:block;">Job Specification Document</label>
+                
+                @if (!string.IsNullOrEmpty(Model.AttachmentPath))
+                {
+                    <div style="display:flex; align-items:center; gap:1rem; background:#fff; border:1px solid #E2E8F0; border-radius:2px; padding:0.75rem; margin-bottom:1.25rem;">
+                        <div style="width:40px; height:40px; background:#EFF6FF; color:#3B82F6; border-radius:2px; display:flex; align-items:center; justify-content:center;">📄</div>
+                        <div style="flex:1;">
+                            <div style="font-size:0.875rem; font-weight:700; color:#1E293B;">Existing Attachment</div>
+                            <div style="font-size:0.75rem; color:#64748B;">Retained unless replaced</div>
+                        </div>
+                        <a href="@Model.AttachmentPath" target="_blank" class="r-btn r-btn-secondary" style="padding:0.4rem 0.8rem; font-size:0.8rem;">View</a>
+                    </div>
+                }
+                
+                <input asp-for="Attachment" type="file" class="r-form-control" style="background:#fff;" accept=".pdf,.doc,.docx,.txt" />
+                <div style="font-size:0.75rem; color:#94A3B8; margin-top:0.5rem;">Upload new file to replace, or leave blank to keep current.</div>
+            </div>
+
+            <div style="display:flex; gap:1rem; padding-top:1.5rem; border-top:1px solid #F1F5F9;">
+                <button type="submit" class="r-btn r-btn-primary" style="padding:0.875rem 2rem;">Save Changes</button>
+                <a href="/Recruiter/Jobs" class="r-btn r-btn-secondary" style="padding:0.875rem 1.5rem;">Discard</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Sidebar Insights -->
+    <div style="position:sticky; top:90px; display:flex; flex-direction:column; gap:1.25rem;">
+        <div class="r-card" style="padding:1.5rem;">
+            <div style="font-weight:800; font-size:1rem; color:#1A202C; margin-bottom:1.25rem;">📝 Update Insights</div>
+            <p style="font-size:0.875rem; color:#64748B; line-height:1.6; margin-bottom:1.5rem;">Updating job details refreshes matching scores for all current applicants automatically.</p>
+            
+            <div style="display:flex; gap:1rem; align-items:flex-start; padding:1rem; background:#FFFBEB; border:1px solid #FDE68A; border-radius:2px;">
+                <span style="font-size:1.25rem; flex-shrink:0;">⚠️</span>
+                <div style="font-size:0.8rem; color:#92400E; font-weight:500;">
+                    Changing <strong>Required Skills</strong> triggers a system-wide re-analysis.
+                </div>
+            </div>
+        </div>
+
+        <div class="r-card" style="padding:1.5rem; background:linear-gradient(135deg, #F0FDF4, #DCFCE7); border:1px solid #86EFAC;">
+            <div style="font-weight:800; font-size:0.95rem; color:#064E3B; margin-bottom:0.75rem;">🤖 Optimization</div>
+            <p style="font-size:0.85rem; color:#047857; margin-bottom:1rem; line-height:1.5;">Need a better description? Use our generator to rewrite this perfectly.</p>
+            <a href="/Recruiter/GenerateJobDescription" class="r-btn" style="background:#10B981; color:#fff; width:100%; justify-content:center;">Try Generator</a>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Custom jQuery validation for FutureDate
+        if ($.validator && $.validator.unobtrusive) {
+            $.validator.addMethod("futuredate", function (value, element, params) {
+                if (!value) return true;
+                var minDate = new Date(params.mindate);
+                var selectedDate = new Date(value);
+                minDate.setHours(0,0,0,0);
+                selectedDate.setHours(0,0,0,0);
+                return selectedDate >= minDate;
+            });
+            $.validator.unobtrusive.adapters.add("futuredate", ["mindate"], function (options) {
+                options.rules["futuredate"] = { mindate: options.params.mindate };
+                options.messages["futuredate"] = options.message;
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            var dateInput = document.getElementById('ApplicationDeadline');
+            if(dateInput) {
+                var tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                var tomorrowString = tomorrow.toISOString().split('T')[0];
+                dateInput.setAttribute('min', tomorrowString);
+            }
+        });
+    </script>
+}

@@ -1,0 +1,779 @@
+@using Microsoft.AspNetCore.Http
+@using AIResumeScreeningSystem.Constants
+@{
+    ViewData["Title"] = "ResuMatch AI | Precision Matcher";
+    var role = Context.Session.GetString(SessionKeys.UserRole);
+    Layout = role switch
+    {
+        "Admin" => "~/Views/Shared/_AdminLayout.cshtml",
+        "Recruiter" => "~/Views/Shared/_RecruiterLayout.cshtml",
+        "Applicant" => "~/Views/Shared/_ApplicantLayout.cshtml",
+        _ => "~/Views/Shared/_Layout.cshtml"
+    };
+
+    var result = ViewBag.Result as AIResumeScreeningSystem.Models.ResumeMatchResult;
+    var hasResult = ViewBag.HasResult != null && (bool)ViewBag.HasResult;
+    int credits = ViewBag.Credits ?? 0;
+    string? errorMessage = TempData["Error"] as string ?? ViewBag.Error as string;
+    var isInsidePortal = role != null;
+}
+
+<style>
+    .matcher-page {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 1.5rem 1rem 3rem;
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+    .page-header h2 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin: 0 0 0.25rem 0;
+        letter-spacing: -0.02em;
+    }
+    .page-header p {
+        color: #64748b;
+        margin: 0;
+        font-size: 0.9rem;
+    }
+
+    .credit-pill {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        color: #475569;
+        padding: 0.4rem 1rem;
+        border-radius: 6px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.8rem;
+    }
+
+    .match-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 2.5rem;
+    }
+
+    .step-label {
+        font-weight: 700;
+        font-size: 0.75rem;
+        color: #0f172a;
+        margin-bottom: 0.5rem;
+    }
+
+    .toggle-btn {
+        background: none;
+        border: none;
+        color: #3b82f6;
+        font-size: 0.75rem;
+        font-weight: 600;
+        cursor: pointer;
+        padding: 0;
+    }
+    .toggle-btn:hover { text-decoration: underline; }
+
+    .upload-zone {
+        border: 1px dashed #cbd5e1;
+        border-radius: 6px;
+        background: #f8fafc;
+        padding: 2rem;
+        text-align: center;
+        cursor: pointer;
+        position: relative;
+        transition: border-color 0.2s, background-color 0.2s;
+    }
+    .upload-zone:hover {
+        border-color: #94a3b8;
+        background: #f1f5f9;
+    }
+    .upload-zone input[type=file] {
+        position: absolute;
+        left: 0; top: 0;
+        width: 100%; height: 100%;
+        opacity: 0;
+        cursor: pointer;
+    }
+    .upload-zone.active {
+        border-color: #10b981;
+        background: #f0fdf4;
+    }
+
+    .icon-circle {
+        margin: 0 auto 0.75rem auto;
+        color: #64748b;
+    }
+    
+    .upload-title {
+        font-weight: 600;
+        color: #0f172a;
+        font-size: 0.9rem;
+    }
+    .upload-subtitle {
+        font-size: 0.8rem;
+        color: #64748b;
+        margin-top: 0.25rem;
+    }
+
+    .match-textarea {
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        color: #0f172a;
+        border-radius: 6px;
+        padding: 1rem;
+        resize: vertical;
+        width: 100%;
+        font-size: 0.9rem;
+        font-family: 'Inter', sans-serif;
+    }
+    .match-textarea:focus {
+        border-color: #3b82f6;
+        outline: none;
+    }
+    .match-textarea::placeholder { color: #94a3b8; }
+
+    .btn-match {
+        background: #0f172a;
+        color: white;
+        border: none;
+        padding: 0.85rem 1.5rem;
+        font-size: 0.9rem;
+        font-weight: 600;
+        border-radius: 6px;
+        cursor: pointer;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+    .btn-match:hover {
+        background: #1e293b;
+    }
+    .btn-match:disabled {
+        background: #94a3b8;
+        cursor: not-allowed;
+    }
+
+    .error-banner {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        color: #b91c1c;
+        padding: 0.75rem 1rem;
+        border-radius: 6px;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.85rem;
+    }
+
+    /* ── Results ── */
+    .result-card {
+        background: #ffffff;
+        border: none;
+        border-radius: 12px;
+        padding: 3rem;
+        height: 100%;
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
+    }
+
+    .score-ring {
+        width: 110px;
+        height: 110px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.2rem;
+        font-weight: 800;
+        margin: 0 auto 1.25rem auto;
+        letter-spacing: -0.03em;
+    }
+
+    .score-label {
+        padding: 0.35rem 1rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+
+    .section-title {
+        color: #0f172a;
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .summary-text {
+        color: #334155;
+        line-height: 1.6;
+        font-size: 0.85rem;
+        background: #f8fafc;
+        padding: 1rem;
+        border-radius: 6px;
+        border-left: 3px solid #cbd5e1;
+    }
+
+    .skill-tag {
+        padding: 0.4rem 0.85rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+    .skill-tag.matched {
+        background: #ecfdf5;
+        border: 1px solid #a7f3d0;
+        color: #065f46;
+    }
+    .skill-tag.missing {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        color: #991b1b;
+    }
+
+    .skills-card {
+        background: #ffffff;
+        border: 1px solid #f1f5f9;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.02);
+    }
+    .skills-card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+    }
+    .skills-card-header .title-group {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 700;
+        font-size: 0.85rem;
+    }
+    .skills-count {
+        padding: 0.15rem 0.5rem;
+        border-radius: 10px;
+        font-size: 0.7rem;
+        font-weight: 700;
+    }
+    .skills-count.green { background: #d1fae5; color: #065f46; }
+    .skills-count.red { background: #fee2e2; color: #991b1b; }
+    .skills-empty {
+        text-align: center;
+        padding: 1rem;
+        color: #94a3b8;
+        font-size: 0.8rem;
+        font-style: italic;
+    }
+
+    .btn-outline-match {
+        background: transparent;
+        color: #0f172a;
+        border: 1px solid #cbd5e1;
+        padding: 0.5rem 1rem;
+        font-weight: 600;
+        border-radius: 6px;
+        text-decoration: none;
+        font-size: 0.85rem;
+    }
+    .btn-outline-match:hover {
+        background: #f8fafc;
+        color: #0f172a;
+    }
+
+    .divider {
+        border: none;
+        border-top: 1px solid #e2e8f0;
+        margin: 2rem 0;
+    }
+
+    .print-only {
+        display: none;
+    }
+
+    /* ── Print Styles for PDF Export ── */
+    @@media print {
+        body * {
+            visibility: hidden;
+        }
+        .result-card, .result-card * {
+            visibility: visible;
+        }
+        .result-card {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            border: none;
+            box-shadow: none;
+            margin: 0;
+            padding: 2rem !important;
+        }
+        .print-hide {
+            display: none !important;
+        }
+        .print-only {
+            display: block !important;
+        }
+        .skills-card {
+            border: 1px solid #e2e8f0 !important;
+            break-inside: avoid;
+            background: transparent !important;
+        }
+        .summary-text {
+            background: transparent !important;
+            border: 1px solid #e2e8f0;
+            border-left: 3px solid #cbd5e1;
+            break-inside: avoid;
+        }
+        .divider {
+            border-top: 1px solid #cbd5e1 !important;
+        }
+    }
+
+    /* ── Responsive: stack side-by-side on small screens ── */
+    @@media (max-width: 768px) {
+        .result-card [style*="grid-template-columns: 1fr 1fr"] {
+            grid-template-columns: 1fr !important;
+        }
+    }
+    @@keyframes slideInDown {
+        from { opacity: 0; transform: translateY(-20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+
+<div class="matcher-page" style="@(isInsidePortal ? "padding: 1rem 0.5rem 2rem;" : "")">
+    <!-- Header -->
+    <div class="page-header">
+        <div>
+            <h2>AI Precision Matcher</h2>
+            <p>Compare your professional CV against a specific job circular. Our AI analyzes your skills, experience, and qualifications to determine your exact fit.</p>
+        </div>
+        <div class="credit-pill">
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            @credits Credits
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="error-banner">
+            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"></path></svg>
+            @errorMessage
+        </div>
+    }
+
+    @if (credits < 2)
+    {
+        <div style="background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.2); padding: 1.25rem 1.5rem; border-radius: 12px; margin-bottom: 2rem; display: flex; align-items: center; justify-content: space-between; animation: slideInDown 0.5s ease-out;">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <div style="background: rgba(245, 158, 11, 0.1); width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #d97706;">
+                    <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h6 style="color: #d97706; margin: 0; font-weight: 700; font-size: 0.95rem;">Low Token Balance</h6>
+                    <p style="color: #64748b; margin: 0.1rem 0 0 0; font-size: 0.85rem;">You have only @credits credits. Each AI match analysis costs 2 credits.</p>
+                </div>
+            </div>
+            <a href="/Credits" class="btn-outline-match" style="border-color: rgba(217, 119, 6, 0.4); color: #d97706; padding: 0.5rem 1.25rem; font-size: 0.8rem; background: transparent;">
+                Buy Credits
+            </a>
+        </div>
+    }
+
+    <div class="row g-4">
+        <!-- ═══ Input Panel ═══ -->
+        <div class="col-12">
+            <div class="match-card">
+                <form asp-action="Index" method="post" enctype="multipart/form-data" id="matchForm">
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2rem; margin-bottom: 1.5rem;">
+                        <div>
+                                <div class="step-label">Step 1 — Provide Your Resume</div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                    <button type="button" class="toggle-btn" id="cvToggleBtn" onclick="toggleCvInput()">
+                                        <span id="cvToggleLabel">Switch to Text Paste</span>
+                                    </button>
+                                    @if (ViewBag.HasSavedCv == true)
+                                    {
+                                        <div class="form-check form-switch" style="margin-bottom: 0;">
+                                            <input class="form-check-input" type="checkbox" id="useSavedCvToggle" onchange="toggleSavedCv(this)">
+                                            <label class="form-check-label" for="useSavedCvToggle" style="font-size: 0.75rem; font-weight: 600; color: #3b82f6; cursor: pointer;">Use Saved Profile CV</label>
+                                            <input type="hidden" name="useSavedCv" id="useSavedCvHidden" value="false">
+                                        </div>
+                                    }
+                                </div>
+                            <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1rem;">
+                                Upload your latest resume. The AI will extract your work history, core skills, and educational background to evaluate your potential.
+                            </p>
+
+                            <div id="cvFileInput">
+                                <div class="upload-zone" id="cvUploadZone" style="height: 200px; display: flex; flex-direction: column; justify-content: center;">
+                                    <div class="icon-circle icon-purple">
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                    </div>
+                                    <div class="upload-title" id="cvFileName">Upload Resume PDF / DOCX</div>
+                                    <div class="upload-subtitle">Max size: 10MB</div>
+                                    <input type="file" name="cvFile" id="cvFileField" accept=".pdf,.doc,.docx" onchange="handleCvFile(this)" />
+                                </div>
+                            </div>
+
+                             <div id="cvSavedInfo" style="display: none; padding: 1.5rem; background: #f0fdf4; border: 1px dashed #10b981; border-radius: 6px; text-align: center;">
+                                <div style="color: #166534; font-weight: 700; font-size: 0.9rem; margin-bottom: 0.25rem;">
+                                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" style="vertical-align: middle; margin-right: 4px;"><path d="M5 13l4 4L19 7"/></svg>
+                                    Profile CV Selected
+                                </div>
+                                <div style="font-size: 0.75rem; color: #166534;">Your saved resume will be used for this analysis.</div>
+                            </div>
+
+                            <div id="cvTextInput" style="display: none;">
+                                <textarea name="cvText" class="match-textarea" style="height: 200px;" placeholder="Paste your resume content here..."></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Job Circular -->
+                        <div>
+                            <div class="step-label">Step 2 — Provide The Job Description</div>
+                            <div style="margin-bottom: 0.5rem;">
+                                <button type="button" class="toggle-btn" onclick="toggleCircularInput()">
+                                    <span id="circularToggleLabel">Switch to Text Paste</span>
+                                </button>
+                            </div>
+                            <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1rem;">
+                                Upload the target job circular or paste the requirements. The AI will identify mandatory skills, key responsibilities, and expected qualifications.
+                            </p>
+
+                            <div id="circularFileInput">
+                                <div class="upload-zone" id="circularUploadZone" style="height: 200px; display: flex; flex-direction: column; justify-content: center;">
+                                    <div class="icon-circle icon-cyan">
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                                    </div>
+                                    <div class="upload-title" id="circularFileName">Upload Job Circular PDF / DOCX</div>
+                                    <div class="upload-subtitle">Or drag and drop here</div>
+                                    <input type="file" name="circularFile" id="circularFileField" accept=".pdf,.doc,.docx" onchange="handleCircularFile(this)" />
+                                </div>
+                            </div>
+
+                            <div id="circularTextInput" style="display: none;">
+                                <textarea name="jobDescription" class="match-textarea" style="height: 200px;" placeholder="Paste the job requirements or circular text here..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="background: #f8fafc; border-radius: 6px; padding: 1rem; margin-bottom: 1.5rem; border-left: 3px solid #3b82f6;">
+                        <div style="font-size: 0.85rem; color: #334155;">
+                            <strong>How it works:</strong> Clicking analyze will consume <strong>2 credits</strong>. The ResuMatch AI engine will parse both documents, calculate a precision match score, highlight your strengths, and identify any missing core skills.
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-match" id="matchBtn">
+                        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                        Analyze Precision Match
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- ═══ Results Panel ═══ -->
+        @if (hasResult && result != null)
+        {
+            var score = result!.MatchScore;
+            var isServiceError = score == 0 && (result.Verdict?.Contains("unavailable", StringComparison.OrdinalIgnoreCase) == true || result.Verdict?.Contains("service", StringComparison.OrdinalIgnoreCase) == true || result.Justification?.Contains("disruption", StringComparison.OrdinalIgnoreCase) == true);
+            var scoreColor  = score >= 80 ? "#10b981" : (score >= 50 ? "#f59e0b" : "#ef4444");
+            var scoreLabel  = score >= 80 ? "EXCELLENT MATCH" : (score >= 50 ? "GOOD POTENTIAL" : "LOW ALIGNMENT");
+            var labelBg     = score >= 80 ? "#dcfce7" : (score >= 50 ? "#fef3c7" : "#fee2e2");
+            var labelColor  = score >= 80 ? "#166534" : (score >= 50 ? "#92400e" : "#991b1b");
+
+            <div class="col-12">
+                <div class="result-card">
+                @if (isServiceError)
+                {
+                    <!-- ═══ Service Error State ═══ -->
+                    <div style="max-width: 480px; margin: 2rem auto; text-align: center; padding: 1rem;">
+                        <div style="width: 48px; height: 48px; border-radius: 12px; background: #fef3c7; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem;">
+                            <svg width="24" height="24" fill="none" stroke="#d97706" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                        </div>
+                        <h3 style="font-size: 1rem; font-weight: 600; color: #0f172a; margin: 0 0 0.5rem 0;">Analysis Unavailable</h3>
+                        <p style="font-size: 0.875rem; color: #64748b; line-height: 1.6; margin: 0 0 1.5rem 0;">The AI screening service is currently experiencing high demand. Your credits have not been charged. Please try again in a moment.</p>
+                        <div style="display: flex; gap: 0.75rem; justify-content: center;">
+                            <a href="/Matching" style="background: #0f172a; color: #fff; padding: 0.6rem 1.25rem; border-radius: 6px; font-size: 0.85rem; font-weight: 600; text-decoration: none;">Try Again</a>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <!-- Print-Only Report Header -->
+                    <div class="print-only" style="margin-bottom: 2rem; border-bottom: 2px solid #0f172a; padding-bottom: 1rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+                            <div>
+                                <h1 style="font-size: 2rem; font-weight: 800; color: #0f172a; margin: 0; letter-spacing: -0.02em;">ResuMatch AI</h1>
+                                <div style="font-size: 0.9rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.25rem;">Precision Match Report</div>
+                            </div>
+                            <div style="text-align: right; font-size: 0.85rem; color: #475569;">
+                                <div>Generated: @DateTime.Now.ToString("MMMM dd, yyyy")</div>
+                                <div style="font-family: monospace; margin-top: 2px;">ID: @Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper()</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ═══ Match Report ═══ -->
+                    <div style="max-width: 680px; margin: 0 auto; color: #1e293b;">
+
+                        <!-- AI Model & Provider Badge -->
+                        <div style="margin-bottom: 2rem; display: flex; justify-content: flex-end; gap: 0.5rem; align-items: center;">
+                            <div style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.1)); border: 1px solid rgba(99, 102, 241, 0.3); padding: 0.6rem 1rem; border-radius: 8px; font-size: 0.8rem; color: #6366f1; display: flex; align-items: center; gap: 0.6rem; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);">
+                                <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24" style="opacity: 0.7;">
+                                    <path d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                                </svg>
+                                <span style="color: #64748b; font-size: 0.75rem;">Powered by:</span>
+                                <strong style="color: #6366f1; font-weight: 600;" id="matchingAiModel">@(ViewBag.AIModel ?? "gemini-2.0-flash")</strong>
+                                <span style="color: #cbd5e1; font-size: 0.75rem;">•</span>
+                                <strong style="color: #6366f1; font-weight: 600;" id="matchingAiProvider">@(ViewBag.AIProvider ?? "Gemini")</strong>
+                            </div>
+                        </div>
+
+                        <!-- Score Header -->
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 1.5rem; border-bottom: 1px solid #f1f5f9; margin-bottom: 2rem;">
+                            <div>
+                                <div style="font-size: 0.7rem; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.4rem;">Compatibility Score</div>
+                                <div style="font-size: 3rem; font-weight: 800; color: @scoreColor; line-height: 1; letter-spacing: -0.04em;">@result!.MatchScore<span style="font-size: 1.2rem; font-weight: 500; color: #cbd5e1;">%</span></div>
+                            </div>
+                            <span style="background: @labelBg; color: @labelColor; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.06em; padding: 0.4rem 0.9rem; border-radius: 20px; text-transform: uppercase;">@scoreLabel</span>
+                        </div>
+
+                        <!-- Metric Breakdown + Skill Alignment -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem; margin-bottom: 2.5rem;">
+                            <!-- Left: Metrics -->
+                            <div>
+                                <div style="font-size: 0.7rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 1rem;">Score Breakdown</div>
+                                @{
+                                    var breakdownItems = new[] {
+                                        (Name: "Technical Skills", Score: result.SkillScore, Weight: 40),
+                                        (Name: "Experience", Score: result.ExperienceScore, Weight: 20),
+                                        (Name: "Keyword Match", Score: result.KeywordScore, Weight: 15),
+                                        (Name: "Education", Score: result.EducationScore, Weight: 12),
+                                        (Name: "Certifications", Score: result.CertificationScore, Weight: 8),
+                                        (Name: "Career Growth", Score: result.CareerGrowthScore, Weight: 5)
+                                    };
+                                }
+                                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                                    @foreach (var item in breakdownItems)
+                                    {
+                                        var barColor = item.Score >= 80 ? "#10b981" : (item.Score >= 50 ? "#f59e0b" : "#ef4444");
+                                        <div>
+                                            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.3rem;">
+                                                <span style="font-size: 0.82rem; color: #475569;">@item.Name <span style="color: #cbd5e1; font-size: 0.7rem;">@item.Weight%</span></span>
+                                                <span style="font-size: 0.82rem; font-weight: 700; color: @barColor;">@item.Score%</span>
+                                            </div>
+                                            <div style="height: 3px; background: #f1f5f9; border-radius: 99px; overflow: hidden;">
+                                                <div style="height: 100%; width: @item.Score%; background: @barColor; border-radius: 99px; transition: width 0.8s ease;"></div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+
+                            <!-- Right: Skills -->
+                            <div>
+                                <div style="font-size: 0.7rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 1rem;">Skill Alignment</div>
+                                <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+                                    @if (result!.CoreSkillMatch != null && result.CoreSkillMatch.Any())
+                                    {
+                                        <div>
+                                            <div style="font-size: 0.7rem; color: #10b981; font-weight: 600; margin-bottom: 0.4rem; display: flex; align-items: center; gap: 0.3rem;">
+                                                <svg width="11" height="11" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                                Matched
+                                            </div>
+                                            <div style="display: flex; flex-wrap: wrap; gap: 0.35rem;">
+                                                @foreach (var skill in result.CoreSkillMatch)
+                                                {
+                                                    <span style="font-size: 0.72rem; font-weight: 500; color: #065f46; background: #ecfdf5; border: 1px solid #a7f3d0; padding: 0.2rem 0.55rem; border-radius: 4px;">@skill</span>
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+                                    @if (result!.MissingSkills != null && result.MissingSkills.Any())
+                                    {
+                                        <div>
+                                            <div style="font-size: 0.7rem; color: #ef4444; font-weight: 600; margin-bottom: 0.4rem; display: flex; align-items: center; gap: 0.3rem;">
+                                                <svg width="11" height="11" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+                                                Missing
+                                            </div>
+                                            <div style="display: flex; flex-wrap: wrap; gap: 0.35rem;">
+                                                @foreach (var skill in result.MissingSkills)
+                                                {
+                                                    <span style="font-size: 0.72rem; color: #94a3b8; border: 1px solid #e2e8f0; padding: 0.2rem 0.55rem; border-radius: 4px;">@skill</span>
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+                                    @if ((result!.CoreSkillMatch == null || !result.CoreSkillMatch.Any()) && (result!.MissingSkills == null || !result.MissingSkills.Any()))
+                                    {
+                                        <p style="font-size: 0.82rem; color: #94a3b8; font-style: italic; margin: 0;">No skill data available.</p>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Verdict, Strengths, Advice -->
+                        <div style="border-top: 1px solid #f1f5f9; padding-top: 2rem; display: flex; flex-direction: column; gap: 1.75rem;">
+                            @if (!string.IsNullOrWhiteSpace(result.Verdict))
+                            {
+                                <div>
+                                    <div style="font-size: 0.7rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.5rem;">Verdict</div>
+                                    <p style="font-size: 0.9rem; line-height: 1.65; color: #1e293b; margin: 0; font-weight: 500;">@result.Verdict</p>
+                                </div>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(result.Justification))
+                            {
+                                <div>
+                                    <div style="font-size: 0.7rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.5rem;">Analysis</div>
+                                    <p style="font-size: 0.875rem; line-height: 1.7; color: #475569; margin: 0;">@result.Justification</p>
+                                </div>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(result.Strengths) && result.Strengths != "System unavailable.")
+                            {
+                                <div>
+                                    <div style="font-size: 0.7rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.5rem;">Key Strengths</div>
+                                    <p style="font-size: 0.875rem; line-height: 1.7; color: #475569; margin: 0;">@result.Strengths</p>
+                                </div>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(result.Recommendation))
+                            {
+                                <div>
+                                    <div style="font-size: 0.7rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.5rem;">Recommendations</div>
+                                    <p style="font-size: 0.875rem; line-height: 1.7; color: #475569; margin: 0;">@result.Recommendation</p>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <hr class="divider" />
+                    <div class="text-center print-hide" style="display: flex; justify-content: center; gap: 0.75rem;">
+                        <button type="button" class="btn-outline-match" onclick="window.print()" style="display: flex; align-items: center; gap: 0.5rem;">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                            Download Report
+                        </button>
+                        <a href="/Matching" class="btn-outline-match">Run Another Match</a>
+                    </div>
+                }
+                </div>
+            </div>
+        }
+
+    </div>
+</div>
+
+<script>
+    function toggleSavedCv(checkbox) {
+        const file = document.getElementById('cvFileInput');
+        const text = document.getElementById('cvTextInput');
+        const saved = document.getElementById('cvSavedInfo');
+        const toggleBtn = document.getElementById('cvToggleBtn');
+        const hidden = document.getElementById('useSavedCvHidden');
+        
+        if (!file || !text || !saved || !toggleBtn || !hidden) return;
+
+        if (checkbox.checked) {
+            file.style.display = 'none';
+            text.style.display = 'none';
+            saved.style.display = 'block';
+            toggleBtn.style.display = 'none';
+            hidden.value = "true";
+        } else {
+            file.style.display = 'block';
+            text.style.display = 'none';
+            saved.style.display = 'none';
+            toggleBtn.style.display = 'block';
+            hidden.value = "false";
+            document.getElementById('cvToggleLabel').textContent = 'Switch to Text Paste';
+        }
+    }
+
+    function toggleCvInput() {
+        const file = document.getElementById('cvFileInput');
+        const text = document.getElementById('cvTextInput');
+        const label = document.getElementById('cvToggleLabel');
+        if (!file || !text || !label) return;
+        const isFileVisible = file.style.display !== 'none';
+
+        file.style.display = isFileVisible ? 'none' : 'block';
+        text.style.display = isFileVisible ? 'block' : 'none';
+        label.textContent = isFileVisible ? 'Switch to File Upload' : 'Switch to Text Paste';
+    }
+
+    function toggleCircularInput() {
+        const file = document.getElementById('circularFileInput');
+        const text = document.getElementById('circularTextInput');
+        const label = document.getElementById('circularToggleLabel');
+        if (!file || !text || !label) return;
+        const isFileVisible = file.style.display !== 'none';
+
+        file.style.display = isFileVisible ? 'none' : 'block';
+        text.style.display = isFileVisible ? 'block' : 'none';
+        label.textContent = isFileVisible ? 'Switch to File Upload' : 'Switch to Text Paste';
+    }
+
+    function handleCvFile(input) {
+        const display = document.getElementById('cvFileName');
+        const zone = document.getElementById('cvUploadZone');
+        if (input.files && input.files[0] && display && zone) {
+            display.textContent = input.files[0].name;
+            display.style.color = '#10b981';
+            zone.classList.add('active');
+        }
+    }
+
+    function handleCircularFile(input) {
+        const display = document.getElementById('circularFileName');
+        const zone = document.getElementById('circularUploadZone');
+        if (input.files && input.files[0] && display && zone) {
+            display.textContent = input.files[0].name;
+            display.style.color = '#0ea5e9';
+            zone.classList.add('active');
+        }
+    }
+
+    const matchForm = document.getElementById('matchForm');
+    if (matchForm) {
+        matchForm.addEventListener('submit', function () {
+            const btn = document.getElementById('matchBtn');
+            if (btn) {
+                btn.innerHTML = '<span style="display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:spin .6s linear infinite;margin-right:8px;vertical-align:middle;"></span> Analyzing with ResuMatch AI...';
+                btn.disabled = true;
+            }
+        });
+    }
+
+    // Animate breakdown bars on load
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(function() {
+            document.querySelectorAll('.breakdown-bar').forEach(function(bar) {
+                bar.style.width = bar.getAttribute('data-target') + '%';
+            });
+        }, 200);
+
+    });
+</script>

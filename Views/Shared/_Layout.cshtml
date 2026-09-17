@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>@ViewData["Title"] — Janala | AI Recruitment Platform</title>
+    <meta name="description" content="Janala — AI-Powered Recruitment & Resume Screening Platform. Connecting top talent with leading employers."/>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/site.css"/>
+    @RenderSection("Styles", required: false)
+</head>
+@{
+    var role = ViewBag.UserRole as string;
+    var userName = ViewBag.UserName as string;
+    var isLoggedIn = ViewBag.IsAuthenticated == true;
+    var userHome = ViewBag.UserHome as string ?? "/";
+}
+<body class="role-@(role?.ToLower() ?? "guest")">
+    <partial name="_Notifications" />
+
+    <header class="app-header">
+        <div class="container nav-container">
+            <a href="@userHome" class="brand-logo" style="text-decoration: none; display: flex; align-items: center; position: relative;">
+                <img src="/images/logo.png" alt="Janala Logo" />
+                @if(!string.IsNullOrEmpty(role)) {
+                    var tagColor = (role == "Recruiter" ? "#7c3aed" : "#ef4444");
+                    <span class="role-badge" style="background: @tagColor; position: absolute; top: -2px; right: -10px;">@role</span>
+                }
+            </a>
+
+            <nav class="desktop-nav">
+                <div class="nav-dropdown">
+                    <a href="/Applicant/BrowseJobs" class="nav-link">Browse Jobs <span class="nav-arrow">▾</span></a>
+                    <div class="nav-dropdown-menu">
+                        <a href="/Applicant/BrowseJobs?sector=Govt" class="nav-dropdown-item">
+                            <span class="nav-icon">🏛️</span>
+                            <div>
+                                <div class="nav-title">Govt. Jobs</div>
+                                <div class="nav-desc">Public sector opportunities</div>
+                            </div>
+                        </a>
+                        <a href="/Applicant/BrowseJobs?sector=Private" class="nav-dropdown-item">
+                            <span class="nav-icon">🏢</span>
+                            <div>
+                                <div class="nav-title">Private Jobs</div>
+                                <div class="nav-desc">Corporate and startup roles</div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+                <a href="/Home/HowItWorks" class="nav-link">How It Works</a>
+                <a href="/Home/ForRecruiters" class="nav-link">For Recruiters</a>
+                <a href="/Home/ContactUs" class="nav-link">Contact Us</a>
+
+
+                
+                @if (isLoggedIn)
+                {
+                    @if (role == "Applicant")
+                    {
+                        <a href="/Applicant" class="btn btn-primary" style="margin-left: 0.5rem;">My Dashboard</a>
+                    }
+                    else if (role == "Recruiter")
+                    {
+                        <a href="/Recruiter" class="btn btn-primary" style="margin-left: 0.5rem;">Recruiter Panel</a>
+                    }
+                    else if (role == "Admin")
+                    {
+                        <a href="/portal/admin" class="btn btn-primary" style="margin-left: 0.5rem;">Admin Panel</a>
+                    }
+
+                    <div class="nav-dropdown" style="margin-left: 0.5rem;">
+                        <button class="nav-link" style="background:none; border:none; display:flex; align-items:center; gap:0.5rem; cursor:pointer; padding:0.25rem;">
+                            <div style="width:32px; height:32px; border-radius:2px; background:var(--brand-primary); color:white; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.875rem;">
+                                @(userName != null && userName.Length > 0 ? userName.Substring(0,1).ToUpper() : "U")
+                            </div>
+                            <span style="font-weight:600; color:var(--text-main); font-size: 0.875rem;">@userName <span class="nav-arrow">▾</span></span>
+                        </button>
+                        <div class="nav-dropdown-menu" style="right: 0; left: auto; min-width: 200px;">
+                            <a href="/Auth/Logout" class="nav-dropdown-item" style="color: var(--accent-red); font-weight: 700;">
+                                <span class="nav-icon" style="font-size: 1.2rem; background: rgba(239, 68, 68, 0.1); border-radius: 2px;">🚪</span>
+                                <span>Sign Out</span>
+                            </a>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="nav-dropdown" style="margin-left:0.5rem;">
+                        <button class="btn btn-outline" style="font-weight:600; cursor:pointer;">
+                            Sign In/Sign Up <span class="nav-arrow">▾</span>
+                        </button>
+                        <div class="nav-dropdown-menu" style="right:0; left:auto; width:260px; padding: 0.2rem;">
+                            
+                            <!-- Job Seeker Account -->
+                            <div style="display:flex; align-items:flex-start; gap:0.5rem; padding:0.5rem; border-bottom:1px solid var(--border-color); margin-bottom:0.2rem;">
+                                <div style="width:32px; height:32px; background:#e8f5e9; border-radius:2px; display:flex; align-items:center; justify-content:center; color:#2e7d32; flex-shrink:0;">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                </div>
+                                <div style="flex:1;">
+                                    <div style="font-weight:600; font-size:0.75rem; color:var(--text-main); margin-bottom:0.1rem; letter-spacing:0.02em;">JOB SEEKER</div>
+                                    <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:0.5rem; white-space:nowrap;">Manage your profile and applications</div>
+                                    <div style="display:flex; gap:0.4rem;">
+                                        <a href="/Auth/ApplicantLogin" style="background:var(--brand-primary); color:white; padding:0.3rem 0.75rem; border-radius:2px; font-size:0.7rem; font-weight:700; text-decoration:none; transition: opacity 0.2s;">Sign In</a>
+                                        <a href="/Auth/JobSeekerRegister" style="background:white; color:var(--text-main); border:1.5px solid var(--border-color); padding:0.3rem 0.75rem; border-radius:2px; font-size:0.7rem; font-weight:700; text-decoration:none; transition: background 0.2s;">Create Account</a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Recruiter Account -->
+                            <div style="display:flex; align-items:flex-start; gap:0.5rem; padding:0.5rem;">
+                                <div style="width:32px; height:32px; background:#f0f9ff; border-radius:2px; display:flex; align-items:center; justify-content:center; color:#0277bd; flex-shrink:0;">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+                                </div>
+                                <div style="flex:1;">
+                                    <div style="font-weight:600; font-size:0.75rem; color:var(--text-main); margin-bottom:0.1rem; letter-spacing:0.02em;">RECRUITER</div>
+                                    <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:0.5rem; white-space:nowrap;">Hire the best talent with precision</div>
+                                    <div style="display:flex; gap:0.4rem;">
+                                        <a href="/Auth/RecruiterLogin" style="background:var(--brand-dark); color:white; padding:0.3rem 0.75rem; border-radius:2px; font-size:0.7rem; font-weight:700; text-decoration:none; transition: opacity 0.2s;">Sign In</a>
+                                        <a href="/Auth/RecruiterRegister" style="background:white; color:var(--text-main); border:1.5px solid var(--border-color); padding:0.3rem 0.75rem; border-radius:2px; font-size:0.7rem; font-weight:700; text-decoration:none;">Join as Employer</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </nav>
+        </div>
+    </header>
+
+    <main style="margin-top: 2rem;">
+        @RenderBody()
+    </main>
+
+
+    <script src="/js/site.js"></script>
+    @RenderSection("Scripts", required: false)
+</body>
+</html>

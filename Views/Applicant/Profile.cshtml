@@ -1,0 +1,533 @@
+@model AIResumeScreeningSystem.Models.Applicant
+@{
+    ViewData["Title"] = "My Profile";
+    Layout = "~/Views/Shared/_ApplicantLayout.cshtml";
+}
+
+<style>
+    .profile-wrapper {
+        font-family: 'SolaimanLipi', 'Inter', -apple-system, blinkmacsystemfont, sans-serif !important;
+        padding-bottom: 2rem;
+        margin-top: 0.85rem; /* Vertically align with sidebar text */
+    }
+
+    .profile-layout {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 1.5rem;
+        align-items: start;
+        height: calc(100vh - 90px);
+    }
+
+    /* Main Form */
+    .profile-card {
+        background: var(--bg-white);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        padding: 1.5rem;
+        height: 100%;
+        overflow-y: auto;
+    }
+    
+    /* Scrollbar styling for a cleaner look */
+    .profile-card::-webkit-scrollbar,
+    .sidebar-panel::-webkit-scrollbar {
+        width: 6px;
+    }
+    .profile-card::-webkit-scrollbar-track,
+    .sidebar-panel::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .profile-card::-webkit-scrollbar-thumb,
+    .sidebar-panel::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 10px;
+    }
+
+    .profile-header {
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 1px solid var(--border-light);
+        padding-bottom: 1.25rem;
+    }
+
+    .profile-avatar {
+        width: 56px;
+        height: 56px;
+        border-radius: var(--radius-sm);
+        background: #f1f5f9;
+        color: #475569;
+        border: 1px solid var(--border-color);
+        font-size: 1.25rem;
+        font-weight: 800;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .profile-title-area {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .profile-title {
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: var(--text-main);
+        margin: 0;
+        line-height: 1.1;
+    }
+
+    .profile-subtitle {
+        color: var(--text-muted);
+        font-size: 0.85rem;
+        margin: 0.15rem 0 0;
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.25rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .form-group label {
+        display: block;
+        font-size: 0.8rem;
+        font-weight: 800;
+        color: var(--text-main);
+        margin-bottom: 0.5rem;
+        text-transform:none;
+        letter-spacing: 0.03em;
+    }
+
+    .form-hint {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        margin-top: 0.35rem;
+    }
+
+    .btn-actions {
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--border-light);
+        display: flex;
+        gap: 1rem;
+    }
+
+    /* Sidebar */
+    .sidebar-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+        margin-top: 0;
+        height: 100%;
+        overflow-y: auto;
+        padding-right: 0.5rem; /* For scrollbar */
+    }
+
+    .sidebar-card {
+        background: var(--bg-white);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        padding: 1.25rem;
+    }
+
+    .sidebar-card-title {
+        font-weight: 800;
+        font-size: 0.85rem;
+        color: var(--text-main);
+        margin: 0 0 1rem 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-transform:none;
+        letter-spacing: 0.05em;
+    }
+
+    /* Strength Card */
+    .strength-card {
+        background: #fcfdfe;
+        border: 1px solid var(--border-color);
+    }
+    
+    .strength-value {
+        font-size: 3rem;
+        font-weight: 900;
+        color: var(--brand-primary);
+        line-height: 1;
+        text-align: center;
+        letter-spacing: -0.05em;
+    }
+
+    .strength-track {
+        height: 6px;
+        background: #f1f5f9;
+        border-radius: var(--radius-full);
+        margin: 1.5rem 0 0.5rem;
+        overflow: hidden;
+    }
+
+    .strength-fill {
+        height: 100%;
+        background: var(--brand-primary);
+        border-radius: var(--radius-full);
+    }
+
+    .strength-tips {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: var(--text-muted);
+        margin: 0;
+        text-align: center;
+    }
+
+    /* Resume Card */
+    .resume-status {
+        border-radius: var(--radius-sm);
+        padding: 0.875rem;
+        margin-bottom: 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        border: 1px solid transparent;
+    }
+
+    .resume-status.active {
+        background: #f0fdf4;
+        border-color: #bbf7d0;
+    }
+    .resume-status.active .title { color: #15803d; }
+    .resume-status.active .desc { color: #166534; }
+
+    .resume-status.warning {
+        background: #fffbeb;
+        border-color: #fef3c7;
+    }
+    .resume-status.warning .title { color: #b45309; }
+    .resume-status.warning .desc { color: #92400e; }
+
+    .resume-status .title {
+        font-size: 0.85rem;
+        font-weight: 800;
+    }
+
+    .resume-status .desc {
+        font-size: 0.7rem;
+    }
+
+    .btn-block-outline {
+        display: block;
+        width: 100%;
+        padding: 0.6rem;
+        background: white;
+        border: 1px solid var(--border-color);
+        color: var(--text-main);
+        text-align: center;
+        border-radius: var(--radius-sm);
+        font-weight: 700;
+        font-size: 0.8rem;
+        text-decoration: none;
+        margin-bottom: 0.75rem;
+        transition: all 0.2s;
+    }
+    .btn-block-outline:hover {
+        background: #f8fafc;
+        border-color: #cbd5e1;
+    }
+
+    /* Matching Tips */
+    .tips-card {
+        background: #f8fafc;
+    }
+
+    @@media (max-width: 992px) {
+        .profile-layout {
+            grid-template-columns: 1fr;
+        }
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+        .sidebar-panel {
+            position: static;
+        }
+    }
+</style>
+
+<div class="profile-wrapper">
+    <div class="profile-layout">
+        <!-- Main Form Area -->
+        <div class="profile-card">
+            <div class="profile-header">
+                <div class="profile-avatar">
+                    @(Model?.User?.FullName?.Substring(0,1).ToUpper() ?? "U")
+                </div>
+                <div>
+                <div class="profile-title-area">
+                    <h3 class="profile-title">@(Model?.User?.FullName ?? "Profile Settings")</h3>
+                </div>
+                <p class="profile-subtitle">Manage your professional identity and core account information.</p>
+                </div>
+            </div>
+
+            <form method="post" asp-action="Profile" asp-controller="Applicant">
+                @Html.AntiForgeryToken()
+
+                <h4 style="font-size: 1.05rem; font-weight:800; border-bottom: 2px solid #f1f5f9; padding-bottom: 0.6rem; margin-bottom: 1.25rem; color: var(--brand-primary);"><i class="fas fa-id-card"></i> Personal Information</h4>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Full Name</label>
+                        <input name="fullName" class="form-control" value="@Model?.User?.FullName" placeholder="Your full name" />
+                    </div>
+                    <div class="form-group">
+                        <label>Email Address</label>
+                        <input class="form-control" value="@Model?.User?.Email" disabled style="background:#f8fafc; cursor:not-allowed;" />
+                        <div class="form-hint">Email is linked to your login account.</div>
+                    </div>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Phone Number</label>
+                        <input name="User.PhoneNumber" class="form-control" value="@Model?.User?.PhoneNumber" placeholder="+8801XXXXXXXXX" />
+                    </div>
+                    <div class="form-group">
+                        <label>Date of Birth</label>
+                        <input type="date" asp-for="DateOfBirth" class="form-control" value="@(Model?.DateOfBirth?.ToString("yyyy-MM-dd"))" />
+                    </div>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Gender</label>
+                        <select asp-for="Gender" class="form-control">
+                            <option value="">Select Gender...</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Current Location (City)</label>
+                        <input asp-for="CurrentLocation" class="form-control" placeholder="City, Country" />
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom:1.5rem;">
+                    <label>Full Address</label>
+                    <textarea asp-for="Address" class="form-control" rows="2" placeholder="e.g. House 12, Road 5, Dhanmondi, Dhaka"></textarea>
+                </div>
+
+                <h4 style="font-size: 1.05rem; font-weight:800; border-bottom: 2px solid #f1f5f9; padding-bottom: 0.6rem; margin: 2.25rem 0 1.25rem; color: var(--brand-primary);"><i class="fas fa-briefcase"></i> Professional Identity</h4>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Headline / Job Title</label>
+                        <input asp-for="CurrentJobTitle" class="form-control" placeholder="e.g. Senior Software Engineer" />
+                    </div>
+                    <div class="form-group">
+                        <label>Years of Experience</label>
+                        <input asp-for="YearsOfExperience" type="number" class="form-control" min="0" />
+                    </div>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Highest Education</label>
+                        <select asp-for="HighestEducation" class="form-control">
+                            <option value="">Select Level...</option>
+                            <option value="High School">High School</option>
+                            <option value="Diploma">Diploma</option>
+                            <option value="BSc">Bachelor's Degree</option>
+                            <option value="MSc">Master's Degree</option>
+                            <option value="PhD">PhD / Doctorate</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>LinkedIn Profile URL</label>
+                        <input asp-for="LinkedInURL" class="form-control" placeholder="https://linkedin.com/in/..." />
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom:1.25rem;">
+                    <label>Portfolio or Website URL</label>
+                    <input asp-for="PortfolioURL" class="form-control" placeholder="https://yourportfolio.com" />
+                </div>
+
+                <div class="form-group" style="margin-bottom:1.5rem;">
+                    <label>Professional Summary</label>
+                    <textarea asp-for="ProfileSummary" class="form-control" rows="5" placeholder="Briefly describe your career journey and aspirations..."></textarea>
+                </div>
+
+                <h4 style="font-size: 1.05rem; font-weight:800; border-bottom: 2px solid #f1f5f9; padding-bottom: 0.6rem; margin: 2.25rem 0 1.25rem; color: var(--brand-primary);"><i class="fas fa-star"></i> Skills & Highlights</h4>
+
+                <div class="form-group" style="margin-bottom:1.5rem;">
+                    <label>Skills <span style="font-weight:400; color:var(--text-muted); text-transform:none; letter-spacing:0;">(comma-separated)</span></label>
+                    <input name="skillsInput" class="form-control" value="@(string.Join(", ", Model?.ApplicantSkills?.Select(s => s.Skill.SkillName) ?? Array.Empty<string>()))" placeholder="e.g. C#, ASP.NET Core, React, SQL" />
+                    <div class="form-hint">Enter skills separated by commas. Our system uses these to match you with jobs.</div>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Certifications & Licenses</label>
+                        <input asp-for="Certifications" class="form-control" placeholder="e.g. AWS Certified, PMP" />
+                    </div>
+                    <div class="form-group">
+                        <label>Languages Spoken</label>
+                        <input asp-for="Languages" class="form-control" placeholder="e.g. English, Spanish, Bengali" />
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom:1.25rem;">
+                    <label>Key Projects</label>
+                    <textarea asp-for="Projects" class="form-control" rows="3" placeholder="Briefly describe key projects you have built or worked on..."></textarea>
+                </div>
+
+                <div class="form-group" style="margin-bottom:1.25rem;">
+                    <label>Achievements & Awards</label>
+                    <textarea asp-for="Achievements" class="form-control" rows="3" placeholder="List any notable achievements, promotions, or awards..."></textarea>
+                </div>
+
+                <div class="btn-actions" style="margin-top: 2rem;">
+                    <button type="submit" class="a-btn a-btn-primary" style="padding:0.75rem 2rem; font-size:0.9rem; font-weight:700;"><i class="fas fa-save" style="margin-right:6px;"></i> Save Profile Details</button>
+                    <a href="/Applicant" class="a-btn a-btn-secondary" style="padding:0.75rem 1.5rem; font-size:0.9rem;">Discard Changes</a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Sidebar Info -->
+        <div class="sidebar-panel">
+            <!-- Completion Card -->
+            <div class="sidebar-card strength-card">
+                <div class="sidebar-card-title">
+                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                    Profile Strength
+                </div>
+                <div>
+                    <div class="strength-value">@(Model?.ProfileCompletionPercent ?? 20)<span style="font-size:1.25rem; font-weight:800; margin-left:2px;">%</span></div>
+                    <div class="strength-track">
+                        <div class="strength-fill" style="width:@(Model?.ProfileCompletionPercent ?? 20)%;"></div>
+                    </div>
+                    @{
+                        var pct = Model?.ProfileCompletionPercent ?? 20;
+                        string tips;
+                        if (pct < 40) tips = "Add headline and summary";
+                        else if (pct < 70) tips = "Add skills and social links";
+                        else if (pct < 90) tips = "Upload professional resume";
+                        else tips = "Your profile is fully optimized!";
+                    }
+                    <p class="strength-tips">@tips</p>
+                </div>
+            </div>
+
+            <!-- Resume Card -->
+<div class="sidebar-card">
+                <div class="sidebar-card-title">
+                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    System Resume
+                </div>
+                 
+                @if (!string.IsNullOrEmpty(Model?.ResumeFilePath))
+                {
+                    <div class="resume-status active">
+                        <span style="font-size:1.1rem;">📄</span>
+                        <div style="flex:1; min-width:0;">
+                            <div class="title">Document Active</div>
+                            <div class="desc">CV parsed successfully</div>
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-light);">
+                        <a href="@Model.ResumeFilePath" target="_blank" class="a-btn a-btn-secondary" style="padding: 0.5rem; font-size: 0.8rem; text-align: center;"><i class="fas fa-eye" style="margin-right:4px;"></i> View CV</a>
+                        <button type="button" onclick="editResume()" class="a-btn a-btn-primary" style="padding: 0.5rem; font-size: 0.8rem;"><i class="fas fa-upload" style="margin-right:4px;"></i> Update CV</button>
+                    </div>
+                    <div style="margin-top: 0.5rem;">
+                        <button type="button" onclick="deleteResume()" class="a-btn" style="width: 100%; padding: 0.5rem; font-size: 0.8rem; background: transparent; color: #dc2626; border: 1px dashed #fecaca; font-weight: 600;"><i class="fas fa-trash" style="margin-right:4px;"></i> Delete Resume</button>
+                    </div>
+                }
+                else
+                {
+                    <div class="resume-status warning">
+                        <span style="font-size:1.1rem;">⚠️</span>
+                        <div style="flex:1;">
+                            <div class="title">Missing Resume</div>
+                            <div class="desc">Score will be restricted</div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-light);">
+                        <button type="button" onclick="editResume()" class="a-btn a-btn-primary" style="width: 100%; padding: 0.5rem; font-size: 0.8rem;"><i class="fas fa-upload" style="margin-right:4px;"></i> Upload Resume</button>
+                    </div>
+                }
+                
+                <form method="post" asp-action="UploadResume" enctype="multipart/form-data" id="uploadResumeForm" style="display:none; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-light);">
+                    <div style="margin-bottom:0.75rem; border: 1px dashed var(--border-color); border-radius: var(--radius-sm); padding: 0.5rem; background: #fafafa;">
+                        <input type="file" name="resumeFile" class="form-control" style="font-size:0.75rem; padding:0.4rem; background: transparent; border: none; width: 100%;" accept=".pdf,.docx" required />
+                    </div>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button type="button" onclick="closeEditForm()" class="a-btn a-btn-secondary" style="flex: 1; font-size: 0.8rem; height: 36px;">Cancel</button>
+                        <button type="submit" class="a-btn a-btn-primary" style="flex: 1; font-size: 0.8rem; height: 36px;">Save CV</button>
+                    </div>
+                    <p style="font-size:0.65rem; color:var(--text-muted); text-align:center; margin-top:0.75rem; font-weight:600;">Max size: 5MB (PDF/DOCX)</p>
+                </form>
+            </div>
+
+
+</div>
+</div>
+</div>
+
+<script>
+    function editResume() {
+        // Show the upload form
+        document.getElementById('uploadResumeForm').style.display = 'block';
+        
+        // Change button text to indicate editing
+        const submitBtn = document.querySelector('#uploadResumeForm button[type="submit"]');
+        submitBtn.innerText = 'Save Changes';
+    }
+    
+    function closeEditForm() {
+        // Hide the upload form
+        document.getElementById('uploadResumeForm').style.display = 'none';
+        
+        // Reset form
+        document.getElementById('uploadResumeForm').reset();
+        
+        // Reset button text
+        const submitBtn = document.querySelector('#uploadResumeForm button[type="submit"]');
+        submitBtn.innerText = 'Upload New CV';
+    }
+    
+    function deleteResume() {
+        if (confirm('Are you sure you want to delete your resume? This action cannot be undone.')) {
+            fetch('/api/ResumeApi/delete', {
+                method: 'DELETE',
+                headers: {
+                    'RequestVerificationToken': getAntiForgeryToken()
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Show success message
+                    alert('Resume deleted successfully');
+                    // Reload page to reflect changes
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('Error deleting resume: ' + error);
+            });
+        }
+    }
+    
+    function getAntiForgeryToken() {
+        const tokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
+        return tokenInput ? tokenInput.value : '';
+    }
+</script>
+</div>

@@ -1,0 +1,124 @@
+@model AIResumeScreeningSystem.DTOs.InterviewScheduleDTO
+@{ 
+    ViewData["Title"] = "Schedule Interview"; 
+    Layout = "~/Views/Shared/_RecruiterLayout.cshtml";
+}
+@{
+    var app = ViewBag.Application as AIResumeScreeningSystem.Models.Application;
+}
+
+<div class="r-page-header-row">
+    <div>
+        <h1 style="font-size:1.75rem; font-weight:800; color:#1A202C; margin:0 0 0.25rem;">Schedule Evaluation</h1>
+        <p style="color:#777; margin:0; font-size:0.95rem;">Set up an interview for @(app?.Applicant?.User?.FullName ?? "the candidate")</p>
+    </div>
+    <a href="/Recruiter/Candidates?jobId=@(app?.JobID ?? 0)" class="r-btn r-btn-secondary">← Back to Candidates</a>
+</div>
+
+<div style="display:grid; grid-template-columns:1fr 340px; gap:2rem; align-items:start;">
+    <!-- Main Form -->
+    <div class="r-card" style="padding:2.5rem;">
+        <form method="post" asp-action="ScheduleInterview" asp-controller="Recruiter">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="All" style="background:#FEF2F2; border:1px solid #FECACA; border-radius:2px; padding:0.875rem 1rem; margin-bottom:1.5rem; color:#B91C1C; font-size:0.875rem;"></div>
+            <input type="hidden" asp-for="ApplicationID"/>
+
+            @if (app != null)
+            {
+                <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:2px; padding:1.25rem; margin-bottom:2rem; display:flex; align-items:center; gap:1rem;">
+                    <div style="width:48px; height:48px; border-radius:2px; background:linear-gradient(135deg,#3B82F6,#2563EB); color:white; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:1rem; flex-shrink:0;">
+                        @(app.Applicant?.User?.FullName.Substring(0, 1).ToUpper() ?? "C")
+                    </div>
+                    <div>
+                        <div style="font-weight:800; font-size:0.95rem; color:#1E293B;">@app.Applicant?.User?.FullName</div>
+                        <div style="font-size:0.8rem; color:#64748B;">Target Role: <span style="font-weight:600; color:#475569;">@app.Job?.JobTitle</span></div>
+                    </div>
+                </div>
+            }
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-bottom:1.5rem;">
+                <div class="r-form-group" style="margin:0;">
+                    <label class="r-form-label">Interview Date *</label>
+                    <input asp-for="InterviewDate" type="date" class="r-form-control" required/>
+                </div>
+                <div class="r-form-group" style="margin:0;">
+                    <label class="r-form-label">Start Time *</label>
+                    <input asp-for="InterviewTime" type="time" class="r-form-control" required/>
+                </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-bottom:1.5rem;">
+                <div class="r-form-group" style="margin:0;">
+                    <label class="r-form-label">Interview Type</label>
+                    <select asp-for="InterviewType" class="r-form-control">
+                        <option value="Online">Online Session</option>
+                        <option value="Offline">Offline (In-Person)</option>
+                    </select>
+                </div>
+                <div class="r-form-group" style="margin:0;">
+                    <label class="r-form-label">Round Number</label>
+                    <input asp-for="InterviewRound" type="number" class="r-form-control" min="1" value="1"/>
+                </div>
+            </div>
+
+            <div class="r-form-group">
+                <label class="r-form-label">Meeting Link <span style="font-weight:400; color:#94A3B8;">(Google Meet / Zoom / Teams)</span></label>
+                <input asp-for="MeetingLink" class="r-form-control" placeholder="e.g. https://meet.google.com/xxx-xxxx-xxx"/>
+            </div>
+
+            <div class="r-form-group">
+                <label class="r-form-label">Physical Location <span style="font-weight:400; color:#94A3B8;">(For offline sessions)</span></label>
+                <input asp-for="InterviewLocation" class="r-form-control" placeholder="e.g. Conference Room A, Level 4"/>
+            </div>
+
+            <div class="r-form-group" style="margin-bottom:2.5rem;">
+                <label class="r-form-label">Candidate Instructions</label>
+                <textarea asp-for="Notes" class="r-form-control" rows="4" placeholder="Mention preparation steps, link to case study, or office entry codes..."></textarea>
+            </div>
+
+            <div style="display:flex; gap:1rem; padding-top:1.5rem; border-top:1px solid #F1F5F9;">
+                <button type="submit" class="r-btn r-btn-primary" style="padding:0.875rem 2.5rem;">🚀 Finalize Schedule</button>
+                <a href="/Recruiter/Candidates?jobId=@(app?.JobID ?? 0)" class="r-btn r-btn-secondary" style="padding:0.875rem 1.5rem;">Cancel</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Sidebar Profile -->
+    <div style="position:sticky; top:90px; display:flex; flex-direction:column; gap:1.25rem;">
+        @if (app != null)
+        {
+            <div class="r-card" style="padding:1.5rem;">
+                <div style="font-weight:800; font-size:1rem; color:#1A202C; margin-bottom:1.5rem;">📋 Candidate Profile</div>
+                
+                <div style="padding:1rem; background:#F0FDF4; border:1px solid #86EFAC; border-radius:2px; margin-bottom:1.25rem;">
+                    <div style="font-size:0.75rem; color:#059669; font-weight:700; text-transform:none; margin-bottom:0.25rem;">AI Match Score</div>
+                    <div style="font-size:1.75rem; font-weight:900; color:#064E3B;">@app.MatchScore%</div>
+                </div>
+
+                <div style="display:flex; flex-direction:column; gap:1rem;">
+                    <div>
+                        <div style="font-size:0.7rem; color:#94A3B8; text-transform:none; font-weight:700;">Email Address</div>
+                        <div style="font-size:0.875rem; color:#475569; font-weight:600; word-break:break-all;">@app.Applicant?.User?.Email</div>
+                    </div>
+                    <div>
+                        <div style="font-size:0.7rem; color:#94A3B8; text-transform:none; font-weight:700;">Applied On</div>
+                        <div style="font-size:0.875rem; color:#475569; font-weight:600;">@app.AppliedDate.ToString("MMM dd, yyyy")</div>
+                    </div>
+                </div>
+
+                <hr style="border:none; border-top:1px solid #F1F5F9; margin:1.5rem 0;">
+
+                <div style="display:flex; gap:0.75rem; align-items:flex-start;">
+                    <span style="font-size:1.1rem; color:#6366F1;">ℹ️</span>
+                    <p style="font-size:0.75rem; color:#64748B; margin:0; line-height:1.5;">Scheduled interviews trigger an automated email and dashboard notification for the candidate.</p>
+                </div>
+            </div>
+        }
+
+        <div class="r-card" style="padding:1.5rem; background:linear-gradient(135deg,#EFF6FF,#DBEAFE); border:1px solid #BFDBFE;">
+            <div style="font-weight:800; font-size:0.95rem; color:#1E40AF; margin-bottom:0.75rem;">📅 Interview Prep</div>
+            <p style="font-size:0.825rem; color:#1E3A8A; margin-bottom:1rem; line-height:1.5;">Review the AI-generated skills gap analysis to focus your interview questions on specific missing competencies.</p>
+            <a href="/Recruiter/SkillsGap?applicationId=@(app?.ApplicationID ?? 0)" class="r-btn" style="background:#3B82F6; color:#fff; width:100%; justify-content:center; padding:0.5rem; font-size:0.8rem;">Analyze Skills Gap →</a>
+        </div>
+    </div>
+</div>

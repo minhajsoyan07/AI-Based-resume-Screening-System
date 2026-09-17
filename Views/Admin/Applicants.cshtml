@@ -1,0 +1,66 @@
+@model IEnumerable<AIResumeScreeningSystem.Models.User>
+@{
+    ViewData["Title"] = "Applicants";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="page-header fade-in">
+    <div>
+        <h1>Applicant Directory</h1>
+        <p>Manage applicant accounts across the platform.</p>
+    </div>
+</div>
+
+<div class="fade-in" style="background:white; border:1px solid var(--border-color); border-radius:6px; overflow:hidden;">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Joined</th>
+                <th style="text-align:right;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model != null && Model.Any())
+            {
+                foreach (var user in Model)
+                {
+                    <tr>
+                        <td style="font-weight:600; color:var(--text-main);">@user.FullName</td>
+                        <td style="color:var(--text-muted);">@user.Email</td>
+                        <td><span class="badge-neutral">@user.Role</span></td>
+                        <td>
+                            @if (user.AccountStatus == "Active")
+                            {
+                                <span class="badge-active">Active</span>
+                            }
+                            else
+                            {
+                                <span class="badge-inactive">Disabled</span>
+                            }
+                        </td>
+                        <td style="color:var(--text-muted);">@user.CreatedDate.ToString("dd MMM yyyy")</td>
+                        <td style="text-align:right;">
+                            <form asp-action="ToggleUser" asp-controller="Admin" method="post" style="display:inline;">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="userId" value="@user.UserID" />
+                                <button type="submit" class="btn btn-sm" style="background:none; border:1px solid var(--border-color); padding:0.3rem 0.6rem; font-size:0.75rem; font-weight:600; cursor:pointer; color:var(--text-main);">
+                                    @(user.AccountStatus == "Active" ? "Disable" : "Enable")
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="6" style="text-align:center; padding:2rem; color:var(--text-muted);">No applicants found.</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

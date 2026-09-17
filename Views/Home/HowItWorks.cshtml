@@ -1,0 +1,248 @@
+@{
+    ViewData["Title"] = "How It Works | ResuMatch Intelligence";
+}
+
+<style>
+    .hiw-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 3rem 1.5rem;
+        animation: fadeIn 0.4s ease-out;
+    }
+
+    .hiw-header {
+        text-align: center;
+        margin-bottom: 4rem;
+    }
+
+    .hiw-title {
+        font-size: 2.25rem;
+        font-weight: 800;
+        color: var(--brand-dark);
+        margin-bottom: 0.75rem;
+        letter-spacing: -0.02em;
+    }
+
+    .hiw-subtitle {
+        font-size: 1.05rem;
+        color: var(--text-muted);
+        max-width: 600px;
+        margin: 0 auto;
+        line-height: 1.5;
+    }
+
+    /* Minimal Steps Grid */
+    .steps-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+        margin-bottom: 4rem;
+    }
+
+    .step-card {
+        background: var(--bg-white);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        padding: 2rem;
+        position: relative;
+        transition: border-color var(--transition-fast);
+    }
+
+    .step-card:hover {
+        border-color: var(--brand-primary);
+    }
+
+    .step-num {
+        font-size: 0.75rem;
+        font-weight: 800;
+        color: var(--brand-primary);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .step-title {
+        font-size: 1.2rem;
+        font-weight: 800;
+        color: var(--text-main);
+        margin-bottom: 0.75rem;
+    }
+
+    .step-desc {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        line-height: 1.5;
+    }
+
+    /* Flat Specs Table/List */
+    .specs-panel {
+        background: var(--bg-white);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        padding: 2rem;
+        margin-top: 3rem;
+    }
+
+    .specs-title {
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: var(--brand-dark);
+        margin-bottom: 1.5rem;
+        text-align: center;
+    }
+
+    .specs-list {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+    }
+
+    .spec-item {
+        padding: 1rem;
+        border-left: 3px solid var(--brand-primary);
+        background: var(--bg-main);
+    }
+
+    .spec-name {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: var(--text-main);
+        margin-bottom: 0.25rem;
+    }
+
+    .spec-desc {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        line-height: 1.4;
+    }
+
+    /* Minimal CTA Banner */
+    .minimal-cta {
+        background: var(--brand-light);
+        border: 1px solid rgba(0, 122, 90, 0.15);
+        border-radius: var(--radius-md);
+        padding: 2rem;
+        margin-top: 4rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .cta-text {
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--brand-dark);
+    }
+
+    .cta-text span {
+        display: block;
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: var(--text-muted);
+        margin-top: 0.25rem;
+    }
+
+    .btn-cta {
+        background: var(--brand-primary);
+        color: white !important;
+        padding: 0.6rem 1.5rem;
+        font-size: 0.85rem;
+        font-weight: 700;
+        border-radius: var(--radius-md);
+        text-decoration: none;
+        transition: background var(--transition-fast);
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+    }
+
+    .btn-cta:hover {
+        background: var(--brand-dark);
+    }
+
+    @@media (max-width: 768px) {
+        .steps-grid { grid-template-columns: 1fr; }
+        .specs-list { grid-template-columns: 1fr; }
+        .minimal-cta { flex-direction: column; gap: 1.5rem; text-align: center; }
+    }
+</style>
+
+<div class="hiw-container">
+    
+    <!-- Clean Header -->
+    <header class="hiw-header">
+        <h1 class="hiw-title">How It Works</h1>
+        <p class="hiw-subtitle">
+            ResuMatch automates talent screening by mapping document context against job parameters using clean semantic scoring.
+        </p>
+    </header>
+
+    <!-- Steps Grid -->
+    <section class="steps-grid">
+        
+        <div class="step-card">
+            <span class="step-num">Step 01</span>
+            <h3 class="step-title">Document Extraction</h3>
+            <p class="step-desc">
+                Upload your resume in PDF or Word formats. The system converts raw document hierarchies and runs OCR layers for scanned files automatically.
+            </p>
+        </div>
+
+        <div class="step-card">
+            <span class="step-num">Step 02</span>
+            <h3 class="step-title">Semantic Context Parsing</h3>
+            <p class="step-desc">
+                The NLP engine classifies and segments your experience history, educational milestones, and core technical skills contextually.
+            </p>
+        </div>
+
+        <div class="step-card">
+            <span class="step-num">Step 03</span>
+            <h3 class="step-title">Precision Match Matrix</h3>
+            <p class="step-desc">
+                Candidate capabilities are cross-referenced with target roles to score overall fit and outline specific missing keywords.
+            </p>
+        </div>
+
+        <div class="step-card">
+            <span class="step-num">Step 04</span>
+            <h3 class="step-title">Direct Screening Results</h3>
+            <p class="step-desc">
+                Recruiters view clean stack-ranked matches immediately, and candidates receive immediate optimization advice on their profiles.
+            </p>
+        </div>
+
+    </section>
+
+    <!-- Technical Pipeline Specs -->
+    <section class="specs-panel">
+        <h2 class="specs-title">Technical Pipeline Specifications</h2>
+        
+        <div class="specs-list">
+            <div class="spec-item">
+                <div class="spec-name">Tesseract OCR</div>
+                <div class="spec-desc">High-integrity scanning for image-only or locked files.</div>
+            </div>
+            <div class="spec-item">
+                <div class="spec-name">Contextual Classification</div>
+                <div class="spec-desc">Identifies work experience years and credential tiers.</div>
+            </div>
+            <div class="spec-item">
+                <div class="spec-name">Dynamic Alignment</div>
+                <div class="spec-desc">Scores overall match status based on target weights.</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Minimal CTA -->
+    <section class="minimal-cta">
+        <div class="cta-text">
+            Ready to analyze your credentials?
+            <span>Create a job seeker profile and receive 2 free AI credits instantly.</span>
+        </div>
+        <a href="/Auth/JobSeekerRegister" class="btn-cta">
+            Create Account &rarr;
+        </a>
+    </section>
+
+</div>

@@ -1,0 +1,258 @@
+@model List<AIResumeScreeningSystem.Models.Job>
+@{ 
+    ViewData["Title"] = "Saved Jobs"; 
+    Layout = "~/Views/Shared/_ApplicantLayout.cshtml";
+}
+
+<style>
+    .saved-jobs-wrapper {
+        font-family: 'SolaimanLipi', 'Inter', -apple-system, blinkmacsystemfont, sans-serif !important;
+        padding-bottom: 2rem;
+    }
+
+    .jobs-header-section {
+        margin-bottom: 2rem;
+        margin-top: 0.85rem;
+    }
+
+    .jobs-header-top {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .jobs-badge {
+        display: inline-flex;
+        align-items: center;
+        background: #fef2f2;
+        color: #dc2626;
+        padding: 0.25rem 0.75rem;
+        border-radius: var(--radius-md);
+        font-weight: 800;
+        font-size: 0.65rem;
+        border: 1px solid #fecaca;
+        text-transform:none;
+        letter-spacing: 0.05em;
+    }
+
+    .jobs-title {
+        font-size: 1.75rem;
+        font-weight: 800;
+        color: var(--text-main);
+        margin: 0;
+        line-height: 1.1;
+    }
+
+    .jobs-subtitle {
+        color: var(--text-muted);
+        margin: 0;
+        font-size: 0.9rem;
+    }
+
+    .table-card {
+        background: var(--bg-white);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    }
+
+    .table-header {
+        padding: 1.25rem;
+        border-bottom: 1px solid var(--border-light);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .table-title {
+        font-weight: 800;
+        color: var(--text-main);
+        font-size: 1rem;
+    }
+
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .data-table th {
+        background: #f8fafc;
+        padding: 0.85rem 1.25rem;
+        font-size: 0.65rem;
+        font-weight: 800;
+        color: #64748b;
+        border-bottom: 1px solid var(--border-color);
+        text-transform:none;
+        letter-spacing: 0.05em;
+        text-align: left;
+    }
+
+    .data-table td {
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid var(--border-light);
+        font-size: 0.9rem;
+    }
+
+    .data-row:hover { background: #fcfdfe; }
+
+    .company-cell {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .company-initial {
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+        color: var(--brand-primary);
+        border: 1px solid var(--border-color);
+        font-weight: 800;
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .job-title-link {
+        font-weight: 800;
+        color: var(--text-main);
+        text-decoration: none;
+        display: block;
+        margin-bottom: 0.1rem;
+    }
+    .job-title-link:hover { color: var(--brand-primary); }
+
+    .job-meta-small {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+    }
+
+    .remove-btn {
+        padding: 0.4rem 0.75rem;
+        font-size: 0.75rem;
+        background: #fff5f5;
+        color: #dc2626;
+        border: 1px solid #fecaca;
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.2s;
+    }
+    .remove-btn:hover { background: #fee2e2; }
+
+    @@media (max-width: 992px) {
+        .data-table th:nth-child(3), .data-table td:nth-child(3) { display: none; }
+    }
+</style>
+
+<div class="saved-jobs-wrapper">
+    @Html.AntiForgeryToken()
+    <div class="jobs-header-section">
+        <div class="jobs-header-top">
+            <h1 class="jobs-title">Saved Opportunities</h1>
+        </div>
+        <p class="jobs-subtitle">Manage your bookmarked positions and apply when you're ready.</p>
+    </div>
+
+    @if (Model == null || !Model.Any())
+    {
+        <div class="table-card" style="padding: 5rem 2rem; text-align: center;">
+            <div style="font-size: 3rem; margin-bottom: 1.5rem;">🔖</div>
+            <h3 style="font-size: 1.5rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.75rem;">No Saved Jobs</h3>
+            <p style="color: var(--text-muted); margin-bottom: 2.5rem; max-width: 400px; margin-left: auto; margin-right: auto;">You haven't saved any jobs yet. Start exploring and bookmark the ones that fit your profile.</p>
+            <a href="/Applicant/BrowseJobs" class="a-btn a-btn-primary" style="padding: 0.875rem 2.5rem;">Browse Jobs</a>
+        </div>
+    }
+    else
+    {
+        <div class="table-card">
+            <div class="table-header">
+                <div class="table-title">Your Bookmarks (@Model.Count)</div>
+                <a href="/Applicant/BrowseJobs" style="font-size: 0.8rem; font-weight: 700; color: var(--brand-primary); text-decoration: none;">Find More Jobs →</a>
+            </div>
+            <div style="overflow-x: auto;">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Job Opportunity</th>
+                            <th>Deadline</th>
+                            <th style="text-align: right;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var job in Model)
+                        {
+                            <tr class="data-row">
+                                <td>
+                                    <div class="company-cell">
+                                        @{
+                                            var compName = job.Company?.CompanyName ?? job.Recruiter?.User?.FullName ?? "Company";
+                                            var initial = string.IsNullOrEmpty(compName) ? "C" : compName.Substring(0, 1).ToUpper();
+                                        }
+                                        <div class="company-initial">@initial</div>
+                                        <div>
+                                            <a href="/Applicant/JobDetails?jobId=@job.JobID" class="job-title-link">@job.JobTitle</a>
+                                            <div class="job-meta-small">
+                                                <span style="font-weight:700;">@compName</span>
+                                                <span style="opacity:0.5;">•</span>
+                                                <span>📍 @(job.JobLocation ?? "Remote")</span>
+                                                <span style="opacity:0.5;">•</span>
+                                                <span>💼 @job.JobType</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td style="font-weight: 500; color: var(--text-muted); font-size: 0.8rem;">
+                                    @(job.ApplicationDeadline?.ToString("dd MMM yyyy") ?? "Open")
+                                </td>
+                                <td style="text-align: right;">
+                                    <div style="display: flex; justify-content: flex-end; gap: 0.4rem;">
+                                        <a href="/Applicant/JobDetails?jobId=@job.JobID" class="a-btn a-btn-secondary" style="padding: 0.4rem 0.75rem; font-size: 0.75rem;">View</a>
+                                        <button type="button" class="remove-btn" onclick="unsaveJob(@job.JobID)">Remove</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        async function unsaveJob(jobId) {
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+            const body = new URLSearchParams(); 
+            body.append('jobId', jobId);
+            if (token) body.append('__RequestVerificationToken', token);
+
+            try {
+                const response = await fetch('/Applicant/UnsaveJob', {
+                    method: 'POST',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    body: body
+                });
+                const result = await response.json();
+                if (result.success) {
+                    showToast(result.message, 'success');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showToast(result.message, 'warning');
+                }
+            } catch (e) {
+                showToast('An error occurred while removing the job.', 'danger');
+            }
+        }
+    </script>
+}

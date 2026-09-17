@@ -1,0 +1,226 @@
+@model List<AIResumeScreeningSystem.Controllers.TokenPackage>
+@{
+    ViewData["Title"] = "Buy Credits";
+    Layout = "~/Views/Shared/_ApplicantLayout.cshtml"; // Default to applicant portal style
+}
+
+<style>
+    :root {
+        --card-bg: #ffffff;
+        --card-border: #e2e8f0;
+        --card-shadow: none;
+    }
+
+    .credits-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 1.5rem 1rem;
+    }
+
+    .header-section {
+        text-align: center;
+        margin-bottom: 2.5rem;
+    }
+
+    .header-section h1 {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--text-main);
+        margin-bottom: 0.5rem;
+    }
+
+    .header-section p {
+        color: var(--text-muted);
+        font-size: 1rem;
+        max-width: 500px;
+        margin: 0 auto;
+    }
+
+    .current-balance {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: #f1f5f9;
+        border: 1px solid var(--card-border);
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        margin-top: 1rem;
+        font-weight: 600;
+        color: var(--brand-primary);
+        font-size: 0.9rem;
+    }
+
+    .package-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+    }
+
+    .package-card {
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        border-radius: 8px;
+        padding: 1.25rem;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+    }
+
+    .package-card.popular {
+        border: 2px solid var(--brand-primary);
+    }
+
+    .popular-tag {
+        position: absolute;
+        top: 0;
+        right: 0;
+        background: var(--brand-primary);
+        color: white;
+        font-size: 0.65rem;
+        font-weight: 700;
+        padding: 0.25rem 0.75rem;
+        border-radius: 0 6px 0 6px;
+        text-transform: uppercase;
+    }
+
+    .package-name {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--text-main);
+        margin-bottom: 0.25rem;
+    }
+
+    .package-credits {
+        font-size: 1.75rem;
+        font-weight: 800;
+        color: var(--brand-primary);
+        margin: 0.5rem 0;
+        display: flex;
+        align-items: baseline;
+        gap: 0.25rem;
+    }
+
+    .package-credits span {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+        font-weight: 500;
+    }
+
+    .package-description {
+        color: var(--text-muted);
+        font-size: 0.85rem;
+        line-height: 1.4;
+        margin-bottom: 1rem;
+        flex: 1;
+    }
+
+    .package-price {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--text-main);
+        margin-bottom: 1rem;
+        padding-top: 0.75rem;
+        border-top: 1px solid #f1f5f9;
+    }
+
+    .buy-btn {
+        width: 100%;
+        padding: 0.5rem;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        text-align: center;
+        text-decoration: none;
+        border: 1px solid var(--brand-primary);
+    }
+
+    .btn-primary {
+        background: var(--brand-primary);
+        color: white !important;
+    }
+
+    .btn-primary:hover {
+        background: var(--brand-dark);
+        color: white !important;
+    }
+
+    .btn-outline {
+        background: white;
+        color: var(--brand-primary) !important;
+    }
+
+    .btn-outline:hover {
+        background: #f8fafc;
+        color: var(--brand-primary) !important;
+    }
+
+    @@media (max-width: 800px) {
+        .package-grid { grid-template-columns: 1fr; }
+        .credits-container { padding: 1rem; }
+    }
+</style>
+
+<div class="credits-container">
+    <div class="header-section">
+        <h1>Unlock AI Resume Screening</h1>
+        <p>Choose a credit package to access our powerful, AI-driven candidate matching engine.</p>
+        
+        <div class="current-balance">
+            <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            Current Balance: @ViewBag.CurrentCredits Credits
+        </div>
+
+        @if (ViewBag.IsVerified == false)
+        {
+            <div style="margin-top: 1.5rem; background: #fffbeb; border: 1px solid #fef3c7; border-radius: 8px; padding: 1.25rem; display: flex; align-items: center; gap: 1rem; text-align: left;">
+                <div style="font-size: 2rem;">📧</div>
+                <div>
+                    <h4 style="margin: 0; color: #92400e; font-size: 1rem; font-weight: 700;">Email Verification Required</h4>
+                    <p style="margin: 0.25rem 0 0; color: #b45309; font-size: 0.85rem;">Please verify your email address to claim your <b>2 Free Starter Credits</b> and enable premium features.</p>
+                </div>
+                <div style="margin-left: auto;">
+                    <a href="#" class="admin-btn admin-btn-primary" style="background: #d97706; border-color: #d97706;">Resend Verification</a>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="package-grid">
+        @foreach (var pkg in Model)
+        {
+            <div class="package-card @(pkg.IsPopular ? "popular" : "")">
+                @if (pkg.IsPopular)
+                {
+                    <div class="popular-tag">Best Value</div>
+                }
+                
+                <div class="package-name">@pkg.Name</div>
+                <div class="package-credits">
+                    @pkg.Credits
+                    <span>Credits</span>
+                </div>
+                
+                <p class="package-description">@pkg.Description</p>
+                
+                <div class="package-price">
+                    ৳ @pkg.PriceBDT.ToString("N0")
+                </div>
+                
+                <a href="/Credits/Checkout?packageId=@pkg.ID" class="buy-btn @(pkg.IsPopular ? "btn-primary" : "btn-outline")">
+                    Choose Plan
+                </a>
+            </div>
+        }
+    </div>
+    
+    <div style="margin-top: 1.5rem; text-align: center; border-top: 1px solid #f1f5f9; padding-top: 1rem;">
+        <h4 style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.05em;">Supported Payment Methods</h4>
+        <div style="display: flex; justify-content: center; align-items: center; gap: 2.5rem; color: var(--text-muted); opacity: 0.7;">
+            <div style="font-weight: 800; font-style: italic; font-size: 1.25rem; letter-spacing: -0.5px;">bKash</div>
+            <div style="font-weight: 800; font-style: italic; font-size: 1.25rem; letter-spacing: -0.5px;">Nagad</div>
+            <div style="display: flex; gap: 1rem; align-items: center; font-weight: 700; font-size: 1.1rem; font-style: italic;">
+                <div>Visa</div>
+            </div>
+        </div>
+    </div>
+</div>

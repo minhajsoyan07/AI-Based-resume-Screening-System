@@ -1,0 +1,583 @@
+@model AIResumeScreeningSystem.DTOs.JobSeekerRegisterDTO
+@{
+    ViewData["Title"] = "Job Seeker Registration";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    .otp-modal-overlay {
+        position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.5);
+        display: none; align-items: center; justify-content: center;
+        z-index: 1000;
+    }
+    .otp-modal {
+        background: white; padding: 2rem; border-radius:2px;
+        text-align: center; width: 90%; max-width: 450px;
+        position: relative;
+    }
+    .otp-close {
+        position: absolute; top: 1rem; right: 1.5rem;
+        font-size: 1.5rem; cursor: pointer; color: #888;
+    }
+    .otp-title { font-size: 1.25rem; color: #333; margin-bottom: 0.5rem; font-weight: 600; line-height: 1.4; }
+    .otp-subtitle { color: #666; margin-bottom: 1.5rem; font-size: 0.9rem; }
+    .otp-inputs { display: flex; justify-content: center; gap: 0.6rem; margin-bottom: 1.5rem; }
+    .otp-input {
+        width: 44px; height: 52px; font-size: 1.6rem; font-weight: 700;
+        text-align: center; border: 2px solid #d1d5db; border-radius: 6px;
+        color: #1e293b; outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+        font-family: 'Courier New', monospace; caret-color: transparent;
+    }
+    .otp-input:focus {
+        border-color: var(--brand-primary);
+        box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
+    }
+    .otp-input.filled { border-color: #10b981; background: #f0fdf4; }
+    .btn-verify { background: #047857; color: white; border: none; padding: 0.65rem 1.5rem; font-size: 1rem; border-radius:2px; cursor: pointer; font-weight: 600; }
+    .btn-verify:hover { background: #059669; }
+
+    /* Modern Professional Inputs */
+    .form-control {
+        border: 1px solid #d1d5db !important;
+        border-radius:2px !important;
+        background-color: #f9fafb !important;
+        transition: all 0.2s ease !important;
+        padding: 0.7rem 1rem !important;
+        font-size: 0.9rem !important;
+    }
+    .form-control:focus {
+        background-color: #ffffff !important;
+        border-color: var(--brand-primary) !important;
+        box-shadow:none;
+    }
+    .form-control::placeholder {
+        color: #9ca3af !important;
+        opacity: 0.7;
+    }
+    
+    .card { border-radius:2px !important; overflow: hidden; }
+    .reg-card-header { background-color: var(--brand-primary) !important; border-bottom: 1px solid var(--brand-dark) !important; }
+    .reg-card-header h3 { color: #ffffff !important; font-size: 1rem !important; font-weight: 700 !important; }
+
+    .resume-input-box {
+        border: 1px solid #d1d5db !important;
+        border-radius:2px !important;
+        background-color: #f9fafb !important;
+        height: 46px;
+        display: flex;
+        align-items: center;
+        padding: 0 1rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .resume-input-box:hover {
+        border-color: var(--brand-primary) !important;
+        background-color: #f0fdf4 !important;
+    }
+    .resume-input-box svg { color: #6b7280; }
+    .resume-input-box.selected { border-color: #10b981 !important; background-color: #f0fdf4 !important; }
+
+    /* Review UI Highlights */
+    .review-highlight { animation: pulse-green 2s infinite; border-color: #10b981 !important; }
+    @@keyframes pulse-green {
+        0% { box-shadow:none; }
+        70% { box-shadow:none; }
+        100% { box-shadow:none; }
+    }
+    .parsing-loader { display: none; align-items: center; gap: 0.5rem; color: var(--brand-primary); font-size: 0.85rem; font-weight: 500; margin-top: 0.5rem; }
+    .spinner { width: 16px; height: 16px; border: 2px solid #e5e7eb; border-top-color: var(--brand-primary); border-radius:2px; animation: spin 0.8s linear infinite; }
+    @@keyframes spin { to { transform:none; } }
+</style>
+
+<div class="container" style="padding-top: 0; padding-bottom: 2rem; margin-top: -1rem;">
+    <div class="reg-page-header">
+        <h1>Job Seeker Registration</h1>
+        <p>Create your account to find your dream job</p>
+    </div>
+
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="alert" style="background:#fef2f2; color:#ef4444; padding:0.75rem; border-radius:2px; margin-bottom:1rem; border:1px solid #fca5a5; font-size:0.9rem;">
+            <div asp-validation-summary="All"></div>
+        </div>
+    }
+
+    <form asp-action="JobSeekerRegister" method="post" enctype="multipart/form-data" id="regForm">
+        <div class="card" style="box-shadow:none; border: 1px solid var(--border-color); padding: 0; margin-bottom: 0.75rem;">
+            <div class="card-header reg-card-header">
+                <h3>Account Login Info</h3>
+            </div>
+            <div class="card-body" style="padding: 1.25rem 1.5rem;">
+                <div class="grid-cols-2">
+                    <div class="form-group">
+                        <label class="form-label">User Name <span class="required" style="color:red;">*</span></label>
+                        <input asp-for="FullName" class="form-control check-avail" data-type="username" placeholder="Enter your user name" required />
+                        <span asp-validation-for="FullName" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email <span class="required" style="color:red;">*</span></label>
+                        <input type="email" asp-for="Email" class="form-control check-avail" data-type="email" placeholder="Enter your email" required />
+                        <span asp-validation-for="Email" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="grid-cols-2">
+                    <div class="form-group">
+                        <label class="form-label">Password <span class="required" style="color:red;">*</span></label>
+                        <div style="position: relative; display: flex; align-items: center;">
+                            <input type="password" asp-for="Password" class="form-control" placeholder="Enter your password" minlength="6" required style="padding-right: 2.5rem;" />
+                            <button type="button" onclick="togglePasswordVisibility(this)" style="position: absolute; right: 10px; background: none; border: none; cursor: pointer; color: #64748b; padding: 0; display: flex; align-items: center; justify-content: center;">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                            </button>
+                        </div>
+                        <span asp-validation-for="Password" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Confirm Password <span class="required" style="color:red;">*</span></label>
+                        <div style="position: relative; display: flex; align-items: center;">
+                            <input type="password" asp-for="ConfirmPassword" class="form-control" placeholder="Confirm your password" required style="padding-right: 2.5rem;" />
+                            <button type="button" onclick="togglePasswordVisibility(this)" style="position: absolute; right: 10px; background: none; border: none; cursor: pointer; color: #64748b; padding: 0; display: flex; align-items: center; justify-content: center;">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                            </button>
+                        </div>
+                        <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" style="box-shadow:none; border: 1px solid var(--border-color); padding: 0; margin-bottom: 0.75rem;">
+            <div class="card-header reg-card-header">
+                <h3>Contact & Profile Info</h3>
+            </div>
+            <div class="card-body" style="padding: 1.25rem 1.5rem;">
+                <div class="grid-cols-2">
+                    <div class="form-group">
+                        <label class="form-label">Phone Number <span class="required" style="color:red;">*</span></label>
+                        <input asp-for="PhoneNumber" class="form-control check-avail" data-type="phone" placeholder="01XXXXXXXXX" pattern="^01[3-9]\d{8}$" maxlength="11" oninput="this.value = this.value.replace(/[^0-9]/g, '');" required />
+                        <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Resume / CV <span style="font-size:0.75rem; font-weight:400; color:#6B7280;">(PDF recommended; DOCX/JPG/PNG also supported)</span></label>
+                        <div id="resumeDropZone" class="resume-input-box" onclick="document.getElementById('ResumeFile').click()">
+                            <input type="file" asp-for="ResumeFile" id="ResumeFile" accept=".pdf,.docx,.txt,.jpg,.jpeg,.png" style="display:none;" />
+                            <div id="resumeDropIcon" style="display:flex; align-items:center; margin-right: 0.75rem;">
+                                <svg style="width:20px; height:20px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" /></svg>
+                            </div>
+                            <div id="resumeDropText" style="color: #6B7280; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1;">
+                                <span id="resumeFileNameDisplay">Click to upload CV</span>
+                            </div>
+                        </div>
+                        <div id="parsingLoader" class="parsing-loader">
+                            <div class="spinner"></div>
+                            <span>Analyzing your CV for auto-mapping...</span>
+                        </div>
+                        <span asp-validation-for="ResumeFile" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <!-- Review & Auto-Mapped Profile Info (Hidden until parse) -->
+                <div id="reviewSection" style="display: none; border-top: 1px dashed #e2e8f0; margin-top: 1.5rem; padding-top: 1.5rem;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; color: #047857;">
+                        <svg style="width:18px; height:18px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span style="font-size: 0.85rem; font-weight: 600;">CV Parsed! Please verify and complete the details below.</span>
+                    </div>
+                    
+                    <div class="grid-cols-2">
+                        <div class="form-group">
+                            <label class="form-label">Highest Education</label>
+                            <input asp-for="HighestEducation" class="form-control" placeholder="e.g. BSc in Computer Science" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Years of Experience</label>
+                            <input asp-for="YearsOfExperience" type="number" class="form-control" placeholder="0" min="0" />
+                        </div>
+                    </div>
+                    
+                    <div class="grid-cols-2">
+                        <div class="form-group">
+                            <label class="form-label">Current Job Title</label>
+                            <input asp-for="CurrentJobTitle" class="form-control" placeholder="e.g. Software Engineer" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">LinkedIn URL</label>
+                            <input asp-for="LinkedInURL" class="form-control" placeholder="https://linkedin.com/in/..." />
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Skills (Extracted)</label>
+                        <textarea asp-for="ExtractedSkills" class="form-control" rows="2" placeholder="Skills found in your CV..."></textarea>
+                        <small style="color: #64748b;">Separate with commas</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Profile Summary</label>
+                        <textarea asp-for="ProfileSummary" class="form-control" rows="3" placeholder="Brief professional summary..."></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <div style="padding: 0.5rem 0; display: flex; justify-content: space-between; align-items: center;">
+            <a href="@Url.Action("Index", "Home")" style="color: var(--brand-primary); text-decoration: none; font-size: 0.9rem;">Already have an account? Sign In</a>
+            <button type="button" class="btn btn-primary" style="padding: 0.6rem 2rem; background: var(--brand-dark); border-radius:2px; font-weight: 600;" onclick="showOtp()">Next</button>
+        </div>
+
+        <!-- OTP Modal -->
+        <div class="otp-modal-overlay" id="otpModal">
+            <div class="otp-modal">
+                <div class="otp-close" onclick="closeOtp()">✕</div>
+                <div class="otp-title">Verify Your Email</div>
+                <div class="otp-subtitle">We have sent a 6-digit OTP to your email.</div>
+                
+                <div class="otp-inputs" id="otpBoxes">
+                    <input type="text" class="otp-input" maxlength="1" inputmode="numeric" id="otp0">
+                    <input type="text" class="otp-input" maxlength="1" inputmode="numeric" id="otp1">
+                    <input type="text" class="otp-input" maxlength="1" inputmode="numeric" id="otp2">
+                    <input type="text" class="otp-input" maxlength="1" inputmode="numeric" id="otp3">
+                    <input type="text" class="otp-input" maxlength="1" inputmode="numeric" id="otp4">
+                    <input type="text" class="otp-input" maxlength="1" inputmode="numeric" id="otp5">
+                </div>
+
+                <div style="display: flex; justify-content: center; align-items: center; gap: 1.5rem;">
+                    <span style="color:#666; cursor:pointer; font-size:0.9rem;" onclick="showOtp()">Resend OTP</span>
+                    <button type="button" class="btn-verify" onclick="submitForm()">Verify</button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        // Instant AJAX Validation
+        let debounceTimer;
+        $('.check-avail').on('input', function() {
+            const input = $(this);
+            const type = input.data('type');
+            const val = input.val();
+            const errorSpan = input.siblings('.text-danger');
+
+            // Quick regex check for username (FullName)
+            if (type === 'username') {
+                const regex = /^[a-zA-Z0-9]+$/;
+                if (val && !regex.test(val)) {
+                    input.addClass('is-invalid');
+                    errorSpan.text("User name can only contain letters and numbers (no spaces or special characters)").show();
+                    return;
+                }
+            }
+
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                if (!val || (val.length < 3 && type !== 'phone')) {
+                    if (type === 'username' && !val) {
+                        errorSpan.hide();
+                        input.removeClass('is-invalid');
+                    }
+                    return;
+                }
+                fetch(`/Auth/CheckAvailability?type=${type}&value=${val}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        if (!data.available) {
+                            input.addClass('is-invalid');
+                            errorSpan.text(`This ${type} is already registered`).show();
+                        } else {
+                            input.removeClass('is-invalid');
+                            errorSpan.hide();
+                        }
+                    });
+            }, 500);
+        });
+
+        function showOtp() {
+            const form = $('#regForm');
+            const isValid = form.valid();
+            const hasAvailErrors = $('.is-invalid').filter(':visible').length > 0;
+
+            if (isValid && !hasAvailErrors) {
+                const email = document.getElementById('Email').value;
+                const btn = document.querySelector('button[onclick="showOtp()"]');
+                const oldText = btn.innerHTML;
+                btn.innerHTML = 'Sending...';
+                btn.disabled = true;
+
+                fetch('/api/auth/send-otp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email })
+                })
+                .then(r => r.json())
+                .then(data => {
+                    btn.innerHTML = oldText;
+                    btn.disabled = false;
+                    if (data.success) {
+                        document.getElementById('otpModal').style.display = 'flex';
+                        for (let i = 0; i < 6; i++) {
+                            document.getElementById('otp' + i).value = '';
+                        }
+                        document.getElementById('otp0').focus();
+                    } else {
+                        alert(data.message || 'Failed to send OTP.');
+                    }
+                })
+                .catch(err => {
+                    btn.innerHTML = oldText;
+                    btn.disabled = false;
+                    alert('Error sending OTP.');
+                });
+            } else {
+                // Find first error and scroll
+                const firstError = $('.input-validation-error, .is-invalid').filter(':visible').first();
+                if (firstError.length) {
+                    $('html, body').animate({
+                        scrollTop: firstError.offset().top - 150
+                    }, 500);
+                    firstError.focus();
+                } else if (!isValid) {
+                    alert("Please fill in all required fields correctly.");
+                }
+            }
+        }
+        function closeOtp() { document.getElementById('otpModal').style.display = 'none'; }
+
+        // ── Robust OTP Input Handler (supports typing, paste, backspace) ──
+        (function initOtpInputs() {
+            const boxes = Array.from(document.querySelectorAll('#otpBoxes .otp-input'));
+
+            boxes.forEach(function(box, idx) {
+                // Allow only digits
+                box.addEventListener('keydown', function(e) {
+                    const allowedKeys = ['Backspace','Delete','Tab','ArrowLeft','ArrowRight','ArrowUp','ArrowDown'];
+                    if (allowedKeys.includes(e.key)) {
+                        if (e.key === 'Backspace' || e.key === 'Delete') {
+                            e.preventDefault();
+                            box.value = '';
+                            box.classList.remove('filled');
+                            if (idx > 0) boxes[idx - 1].focus();
+                        }
+                        return;
+                    }
+                    // Allow Ctrl+V / Cmd+V for paste
+                    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v') return;
+                    // Block non-digit keys
+                    if (!/^[0-9]$/.test(e.key)) { e.preventDefault(); return; }
+                });
+
+                // After a digit is typed, advance to next box
+                box.addEventListener('input', function() {
+                    const val = box.value.replace(/[^0-9]/g, '');
+                    box.value = val ? val[val.length - 1] : '';
+                    if (box.value) {
+                        box.classList.add('filled');
+                        if (idx < boxes.length - 1) boxes[idx + 1].focus();
+                    } else {
+                        box.classList.remove('filled');
+                    }
+                });
+
+                // ── PASTE HANDLER: distributes all digits across the boxes ──
+                box.addEventListener('paste', function(e) {
+                    e.preventDefault();
+                    const pasted = (e.clipboardData || window.clipboardData)
+                        .getData('text')
+                        .replace(/[^0-9]/g, '') // strip non-digits (e.g. spaces, dashes)
+                        .slice(0, 6);
+                    if (!pasted) return;
+                    // Distribute digits starting from the first box
+                    boxes.forEach(function(b) { b.value = ''; b.classList.remove('filled'); });
+                    for (let i = 0; i < pasted.length; i++) {
+                        boxes[i].value = pasted[i];
+                        boxes[i].classList.add('filled');
+                    }
+                    // Focus the next empty box, or the last box if all filled
+                    const nextEmpty = boxes.find(function(b) { return !b.value; });
+                    (nextEmpty || boxes[boxes.length - 1]).focus();
+                    // Auto-submit if all 6 digits filled via paste
+                    if (pasted.length === 6) submitForm();
+                });
+
+                // Select on focus for easy overwrite
+                box.addEventListener('focus', function() { box.select(); });
+            });
+        })();
+
+        function submitForm() {
+            const otp = Array.from({length: 6}, (_, i) => document.getElementById('otp' + i).value).join('');
+            if (otp.length !== 6 || !/^\d{6}$/.test(otp)) {
+                // Shake the boxes to signal error
+                document.querySelectorAll('#otpBoxes .otp-input').forEach(b => {
+                    b.style.borderColor = '#ef4444';
+                    setTimeout(() => { b.style.borderColor = ''; }, 1500);
+                });
+                return;
+            }
+
+            const email = document.getElementById('Email').value;
+            const btn = document.querySelector('.btn-verify');
+            const oldText = btn.innerHTML;
+            btn.innerHTML = '<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.4);border-top-color:white;border-radius:50%;animation:spin .6s linear infinite;margin-right:6px;vertical-align:middle;"></span>Verifying...';
+            btn.disabled = true;
+
+            fetch('/api/auth/verify-otp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: email, otp: otp })
+            })
+            .then(r => r.json())
+            .then(data => {
+                btn.innerHTML = oldText;
+                btn.disabled = false;
+                if (data.success) {
+                    document.getElementById('regForm').submit();
+                } else {
+                    // Shake + clear on wrong OTP
+                    document.querySelectorAll('#otpBoxes .otp-input').forEach(b => {
+                        b.style.borderColor = '#ef4444';
+                        b.value = '';
+                        b.classList.remove('filled');
+                        setTimeout(() => { b.style.borderColor = ''; }, 1500);
+                    });
+                    document.getElementById('otp0').focus();
+                }
+            })
+            .catch(() => {
+                btn.innerHTML = oldText;
+                btn.disabled = false;
+            });
+        }
+
+        // ── Resume drag-and-drop & file preview ──
+        (function() {
+                const dropZone = document.getElementById('resumeDropZone');
+                const fileInput = document.getElementById('ResumeFile');
+                const fileNameDisplay = document.getElementById('resumeFileNameDisplay');
+                const dropIcon = document.getElementById('resumeDropIcon');
+                const allowed = ['.pdf','.docx','.txt','.jpg','.jpeg','.png'];
+                const maxSize = 5 * 1024 * 1024; // 5 MB
+
+                if (!dropZone || !fileInput) return;
+
+                fileInput.addEventListener('change', handleFile);
+
+                dropZone.addEventListener('dragover', function(e) {
+                    e.preventDefault();
+                    dropZone.style.borderColor = '#047857';
+                    dropZone.style.background = '#f0fdf4';
+                });
+
+                dropZone.addEventListener('dragleave', function(e) {
+                    e.preventDefault();
+                    dropZone.style.borderColor = '#d1d5db';
+                    dropZone.style.background = '#f9fafb';
+                });
+
+                dropZone.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    dropZone.style.borderColor = '#d1d5db';
+                    dropZone.style.background = '#f9fafb';
+                    if (e.dataTransfer.files.length) {
+                        fileInput.files = e.dataTransfer.files;
+                        handleFile();
+                    }
+                });
+
+                function handleFile() {
+                    const file = fileInput.files[0];
+                    if (!file) return;
+                    const ext = '.' + file.name.split('.').pop().toLowerCase();
+                    if (!allowed.includes(ext)) {
+                        fileNameDisplay.style.color = '#ef4444';
+                        fileNameDisplay.textContent = 'Invalid format';
+                        return;
+                    }
+                    if (file.size > maxSize) {
+                        fileNameDisplay.style.color = '#ef4444';
+                        fileNameDisplay.textContent = 'File too large';
+                        return;
+                    }
+                    // Show success
+                    dropZone.classList.add('selected');
+                    dropIcon.innerHTML = '<svg style="width:20px;height:20px;color:#047857;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
+                    fileNameDisplay.style.color = '#047857';
+                    fileNameDisplay.textContent = file.name;
+
+                    // Trigger Preview Parse
+                    startParsing(file);
+                }
+
+                function startParsing(file) {
+                    const loader = document.getElementById('parsingLoader');
+                    const reviewSection = document.getElementById('reviewSection');
+                    
+                    loader.style.display = 'flex';
+                    
+                    const formData = new FormData();
+                    formData.append('resumeFile', file);
+
+                    fetch('/Auth/PreviewParse', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(r => r.json())
+                    .then(res => {
+                        loader.style.display = 'none';
+                        if (res.success && res.data) {
+                            const d = res.data;
+                            
+                            // Map values
+                            if(d.name) {
+                                const nameEl = document.getElementById('FullName');
+                                if(!nameEl.value) {
+                                    nameEl.value = d.name;
+                                    nameEl.classList.add('review-highlight');
+                                    setTimeout(() => nameEl.classList.remove('review-highlight'), 3000);
+                                }
+                            }
+                            if(d.email) {
+                                const emailEl = document.getElementById('Email');
+                                if(!emailEl.value) {
+                                    emailEl.value = d.email;
+                                    emailEl.classList.add('review-highlight');
+                                    setTimeout(() => emailEl.classList.remove('review-highlight'), 3000);
+                                }
+                            }
+                            if(d.phone) {
+                                const phoneEl = document.getElementById('PhoneNumber');
+                                if(!phoneEl.value) {
+                                    phoneEl.value = d.phone;
+                                    phoneEl.classList.add('review-highlight');
+                                    setTimeout(() => phoneEl.classList.remove('review-highlight'), 3000);
+                                }
+                            }
+
+                            // Show profile review section
+                            reviewSection.style.display = 'block';
+                            
+                            document.getElementById('HighestEducation').value = d.highestEducation || d.education || '';
+                            document.getElementById('YearsOfExperience').value = d.yearsOfExperience || 0;
+                            document.getElementById('CurrentJobTitle').value = d.currentJobTitle || '';
+                            document.getElementById('LinkedInURL').value = d.linkedInURL || '';
+                            document.getElementById('ProfileSummary').value = d.profileSummary || '';
+                            
+                            if (d.skills && d.skills.length > 0) {
+                                document.getElementById('ExtractedSkills').value = d.skills.join(', ');
+                            }
+
+                            // Highlight the new section
+                            reviewSection.classList.add('review-highlight');
+                            setTimeout(() => reviewSection.classList.remove('review-highlight'), 2000);
+                        }
+                    })
+                    .catch(err => {
+                        console.error("Parsing error:", err);
+                        loader.style.display = 'none';
+                    });
+                }
+        })();
+    </script>
+}

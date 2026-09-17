@@ -1,0 +1,440 @@
+@model AIResumeScreeningSystem.DTOs.CompanySetupDTO
+@{
+    ViewData["Title"] = "Organization Info Setup";
+    Layout = "~/Views/Shared/_RecruiterLayout.cshtml";
+}
+
+<style>
+    .setup-container {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    .setup-header {
+        background: transparent;
+        padding: 0;
+        margin-bottom: 2.5rem;
+        color: #333;
+    }
+
+    .setup-header h1 {
+        color: #007654;
+        font-size: 2.25rem;
+        font-weight: 500;
+        margin-bottom: 0.25rem;
+    }
+
+    .setup-header p {
+        color: #007654;
+        font-size: 1rem;
+        margin: 0;
+    }
+
+    .setup-section {
+        background: white;
+        border-radius: var(--radius-lg);
+        box-shadow:none;
+        border: 1px solid var(--border-color);
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .section-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--brand-dark);
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid var(--bg-gray);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .form-group.full {
+        grid-column: 1 / -1;
+    }
+
+    .file-upload-box {
+        border: 2px dashed var(--border-color);
+        border-radius: var(--radius-md);
+        padding: 1.5rem;
+        text-align: center;
+        background: var(--bg-gray);
+        cursor: pointer;
+        transition: all var(--transition-fast);
+        position: relative;
+    }
+
+    .file-upload-box:hover {
+        border-color: var(--brand-primary);
+        background: var(--bg-main);
+    }
+
+    .file-upload-box input[type="file"] {
+        position: absolute;
+        top: 0; right: 0; bottom: 0; left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        cursor: pointer;
+    }
+
+    .file-icon {
+        font-size: 2rem;
+        color: var(--text-muted);
+        margin-bottom: 0.5rem;
+    }
+
+    .btn-save {
+        background: #007654;
+        color: white;
+        font-weight: 700;
+        padding: 1rem 2.5rem;
+        font-size: 1.1rem;
+        border: none;
+        border-radius: var(--radius-md);
+        box-shadow:none;
+        cursor: pointer;
+        transition: all var(--transition-smooth);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+    }
+
+    .btn-save:hover {
+        transform:none;
+        background: #005c42;
+        box-shadow:none;
+    }
+    
+    /* Advanced Tag Input */
+    .tag-input-container {
+        display: flex; flex-wrap: wrap; gap: 0.5rem;
+        padding: 0.5rem;
+        border: 1px solid #d1d5db; border-radius:2px;
+        background: white;
+    }
+    .tag-input-container input {
+        border: none; flex: 1; outline: none; padding: 0.25rem;
+    }
+    .tag-chip {
+        background: #ECFDF5; color: #047857;
+        padding: 0.25rem 0.75rem; border-radius:2px;
+        display: flex; align-items: center; gap: 0.25rem; font-size: 0.875rem;
+        font-weight: 600; border: 1px solid #A7F3D0;
+    }
+    .tag-remove {
+        cursor: pointer; font-size: 1rem; line-height: 1; color: #10B981;
+    }
+    .tag-remove:hover { color: #047857; }
+    
+    .img-preview {
+        display: none; max-width: 100%; max-height: 80px; 
+        object-fit: contain; margin: 0 auto 0.5rem auto; border-radius:2px;
+    }
+    
+</style>
+
+<div class="setup-container">
+    <div class="setup-header">
+        <div class="setup-header-content">
+            <h1>Employer Registration Form</h1>
+            <p>Get real time search and get new jobs</p>
+        </div>
+    </div>
+
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="alert" style="background:#fef2f2; color:#ef4444; padding:1rem; border-radius:2px; margin-bottom:1.5rem; border:1px solid #fca5a5;">
+            <div asp-validation-summary="All"></div>
+        </div>
+    }
+
+    <form asp-action="CompanySetup" method="post" enctype="multipart/form-data">
+        
+        <!-- Organization Info -->
+        <div class="setup-section">
+            <h2 class="section-title">Organization Info</h2>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Name of the organization <span class="text-danger">*</span></label>
+                    <input asp-for="CompanyName" class="form-control" placeholder="Enter your organization name" required />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Name of the organization (Bangla)</label>
+                    <input asp-for="CompanyNameBangla" class="form-control" placeholder="Enter your organization name (Bangla)" />
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Organization category <span class="text-danger">*</span></label>
+                    <select asp-for="OrganizationCategory" class="form-control" required>
+                        <option value="">Select your organization category</option>
+                        <option value="Government">Government</option>
+                        <option value="Semi Government">Semi Government</option>
+                        <option value="Private Firm">Private Firm</option>
+                        <option value="NGO">NGO</option>
+                        <option value="International Agencies">International Agencies</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Industry Type <span class="text-danger">*</span></label>
+                    <input asp-for="IndustryType" class="form-control" placeholder="Enter your industry type" required />
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Website address</label>
+                    <input asp-for="CompanyWebsite" class="form-control" placeholder="https://www.example.com" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Organization Email <span class="text-danger">*</span></label>
+                    <input asp-for="OrganizationEmail" type="email" class="form-control" placeholder="Enter your organization email" required />
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group full">
+                    <label class="form-label">Organization tags</label>
+                    <div class="tag-input-container">
+                        <div id="tags-wrapper" style="display:flex; gap:0.5rem; flex-wrap:wrap;"></div>
+                        <input type="text" id="tagger" placeholder="Type tag and press enter" />
+                    </div>
+                    <input type="hidden" asp-for="Tags" id="hidden-tags" />
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group full">
+                    <label class="form-label">Organization tagline</label>
+                    <input asp-for="Tagline" class="form-control" placeholder="Enter your organization tagline" />
+                </div>
+            </div>
+
+            <!-- Uploads -->
+            <div class="form-row" style="grid-template-columns: 1fr 1fr 1fr; margin-top:2rem;">
+                <div class="form-group">
+                    <label class="form-label">Logo</label>
+                    <div class="file-upload-box">
+                        <input asp-for="LogoFile" type="file" accept="image/*" />
+                        <img class="img-preview" src="" />
+                        <div class="file-icon"><svg style="width:24px; height:24px; color:#6B7280; margin:0 auto;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg></div>
+                        <div class="upload-btn-text" style="font-weight:600; font-size:0.875rem; color:#007654; border:1px solid #007654; padding:0.25rem 0.5rem; border-radius:2px; display:inline-block;">Upload</div>
+                        <div class="file-name-text" style="font-size:0.75rem; margin-top:0.5rem; color:#666;"></div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Cover photo</label>
+                    <div class="file-upload-box">
+                        <input asp-for="CoverPhotoFile" type="file" accept="image/*" />
+                        <img class="img-preview" src="" />
+                        <div class="file-icon"><svg style="width:24px; height:24px; color:#6B7280; margin:0 auto;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg></div>
+                        <div class="upload-btn-text" style="font-weight:600; font-size:0.875rem; color:#007654; border:1px solid #007654; padding:0.25rem 0.5rem; border-radius:2px; display:inline-block;">Upload</div>
+                        <div class="file-name-text" style="font-size:0.75rem; margin-top:0.5rem; color:#666;"></div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Signature</label>
+                    <div class="file-upload-box">
+                        <input asp-for="SignatureFile" type="file" accept="image/*" />
+                        <img class="img-preview" src="" />
+                        <div class="file-icon"><svg style="width:24px; height:24px; color:#6B7280; margin:0 auto;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg></div>
+                        <div class="upload-btn-text" style="font-weight:600; font-size:0.875rem; color:#007654; border:1px solid #007654; padding:0.25rem 0.5rem; border-radius:2px; display:inline-block;">Upload</div>
+                        <div class="file-name-text" style="font-size:0.75rem; margin-top:0.5rem; color:#666;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-row" style="margin-top:1.5rem;">
+                <div class="form-group">
+                    <label class="form-label">Establishment year</label>
+                    <input asp-for="EstablishmentYear" type="number" class="form-control" placeholder="e.g. 2010" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Organization size</label>
+                    <select asp-for="CompanySize" class="form-control">
+                        <option value="">Select size</option>
+                        <option value="1-15">1-15 Employees</option>
+                        <option value="16-50">16-50 Employees</option>
+                        <option value="51-200">51-200 Employees</option>
+                        <option value="201-500">201-500 Employees</option>
+                        <option value="500+">500+ Employees</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group full">
+                <label class="form-label">About Organization</label>
+                <textarea asp-for="AboutOrganization" class="form-control" rows="4" placeholder="Enter about your organization"></textarea>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group full">
+                    <label class="form-label">Vision of the organization</label>
+                    <textarea asp-for="Vision" class="form-control" rows="3" placeholder="Enter vision of the organization"></textarea>
+                </div>
+                <div class="form-group full">
+                    <label class="form-label">Mission of the organization</label>
+                    <textarea asp-for="Mission" class="form-control" rows="3" placeholder="Enter mission of the organization"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Address & Contact Info -->
+        <div class="setup-section">
+            <h2 class="section-title">Organization Info</h2>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Division</label>
+                    <select asp-for="Division" class="form-control">
+                        <option value="">Select division</option>
+                        <option value="Dhaka">Dhaka</option>
+                        <option value="Chattogram">Chattogram</option>
+                        <option value="Sylhet">Sylhet</option>
+                        <option value="Rajshahi">Rajshahi</option>
+                        <option value="Khulna">Khulna</option>
+                        <option value="Barishal">Barishal</option>
+                        <option value="Rangpur">Rangpur</option>
+                        <option value="Mymensingh">Mymensingh</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">District</label>
+                    <input asp-for="District" class="form-control" placeholder="Enter district" />
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Thana/Upazila</label>
+                    <input asp-for="Thana" class="form-control" placeholder="Enter thana" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Postal code</label>
+                    <input asp-for="PostalCode" class="form-control" placeholder="Enter postal code" />
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group full">
+                    <label class="form-label">Organization full address</label>
+                    <input asp-for="FullAddress" class="form-control" placeholder="Enter your organization full address" />
+                </div>
+                <div class="form-group full">
+                    <label class="form-label">Organization full address in Bangla</label>
+                    <input asp-for="FullAddressBangla" class="form-control" placeholder="Enter your organization full address in bangla" />
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Organization mobile number</label>
+                    <input asp-for="MobileNumber" class="form-control" placeholder="Enter mobile number" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Organization land phone number</label>
+                    <input asp-for="LandPhoneNumber" class="form-control" placeholder="Enter land phone number" />
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-top: 2rem;">
+            <button type="submit" class="btn-save">SAVE CHANGE</button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        // Advanced Tagging Logic
+        const tagger = document.getElementById('tagger');
+        const hiddenTags = document.getElementById('hidden-tags');
+        const tagsWrapper = document.getElementById('tags-wrapper');
+        let tagsArray = hiddenTags.value ? hiddenTags.value.split(',').filter(t => t.trim() !== '') : [];
+
+        function renderTags() {
+            tagsWrapper.innerHTML = '';
+            tagsArray.forEach((tag, index) => {
+                const tagEl = document.createElement('div');
+                tagEl.className = 'tag-chip';
+                tagEl.innerHTML = `<span>${tag}</span> <span class="tag-remove" onclick="removeTag(${index})">&times;</span>`;
+                tagsWrapper.appendChild(tagEl);
+            });
+            hiddenTags.value = tagsArray.join(',');
+        }
+
+        function removeTag(index) {
+            tagsArray.splice(index, 1);
+            renderTags();
+        }
+
+        tagger.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ',') {
+                e.preventDefault();
+                const v = this.value.trim();
+                if (v && !tagsArray.includes(v)) {
+                    tagsArray.push(v);
+                    renderTags();
+                }
+                this.value = '';
+            }
+        });
+
+        // Ensure uncommitted tag text is captured on form submission
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const v = tagger.value.trim();
+            if (v && !tagsArray.includes(v)) {
+                tagsArray.push(v);
+                hiddenTags.value = tagsArray.join(',');
+            }
+        });
+        
+        // Initial Render
+        renderTags();
+
+        // Advanced File Previews
+        document.querySelectorAll('.file-upload-box input[type="file"]').forEach(input => {
+            input.addEventListener('change', function(e) {
+                const box = this.parentElement;
+                const fileNameEl = box.querySelector('.file-name-text');
+                const fileIcon = box.querySelector('.file-icon');
+                const uploadBtn = box.querySelector('.upload-btn-text');
+                const previewImg = box.querySelector('.img-preview');
+                
+                if (this.files && this.files.length > 0) {
+                    const file = this.files[0];
+                    fileNameEl.textContent = file.name;
+                    uploadBtn.style.background = '#007654';
+                    uploadBtn.style.color = 'white';
+                    
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        previewImg.src = e.target.result;
+                        previewImg.style.display = 'block';
+                        fileIcon.style.display = 'none';
+                    }
+                    reader.readAsDataURL(file);
+                } else {
+                    fileNameEl.textContent = '';
+                    uploadBtn.style.background = 'transparent';
+                    uploadBtn.style.color = '#007654';
+                    previewImg.style.display = 'none';
+                    fileIcon.style.display = 'block';
+                }
+            });
+        });
+    </script>
+}

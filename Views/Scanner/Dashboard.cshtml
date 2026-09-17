@@ -1,0 +1,343 @@
+@{
+    ViewData["Title"] = "ResuMatch | Scanner Dashboard";
+    Layout = "_Layout";
+}
+
+<style>
+    :root {
+        --ai-bg-dark: #0a0a0f;
+        --ai-card-bg: rgba(255, 255, 255, 0.03);
+        --ai-card-border: rgba(255, 255, 255, 0.08);
+        --ai-accent: #6366f1;
+        --ai-accent-glow: rgba(99, 102, 241, 0.4);
+        --ai-text-main: #f8fafc;
+        --ai-text-muted: #94a3b8;
+    }
+
+    body {
+        background-color: var(--ai-bg-dark);
+        color: var(--ai-text-main);
+        font-family: 'Inter', sans-serif;
+        background-image: 
+            radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.1), transparent 20%),
+            radial-gradient(circle at 90% 80%, rgba(139, 92, 246, 0.1), transparent 20%);
+        background-attachment: fixed;
+    }
+
+    /* Override layout defaults */
+    .navbar { background: rgba(10, 10, 15, 0.8) !important; backdrop-filter: blur(10px); border-bottom: 1px solid var(--ai-card-border); }
+    .navbar * { color: var(--ai-text-main) !important; }
+    .sidebar { display: none !important; }
+    .main-content { margin-left: 0 !important; background: transparent !important; padding-top: 2rem; }
+
+    .dashboard-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 3rem;
+        animation: fadeInDown 0.5s ease-out;
+    }
+
+    .credit-pill {
+        background: rgba(99, 102, 241, 0.1);
+        border: 1px solid rgba(99, 102, 241, 0.3);
+        color: #a5b4fc;
+        padding: 0.5rem 1.25rem;
+        border-radius: 999px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .ai-card {
+        background: var(--ai-card-bg);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid var(--ai-card-border);
+        border-radius: 20px;
+        padding: 2.5rem;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3);
+        animation: fadeInUp 0.6s ease-out;
+    }
+
+    .form-label {
+        color: var(--ai-text-main);
+        font-weight: 600;
+        margin-bottom: 0.75rem;
+        font-size: 1.05rem;
+    }
+
+    .ai-input {
+        background: rgba(0, 0, 0, 0.2);
+        border: 1px solid var(--ai-card-border);
+        color: var(--ai-text-main);
+        border-radius: 12px;
+        padding: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .ai-input:focus {
+        background: rgba(0, 0, 0, 0.3);
+        border-color: var(--ai-accent);
+        box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+        color: white;
+        outline: none;
+    }
+    
+    .ai-input::placeholder { color: var(--ai-text-muted); }
+
+    .file-upload-wrapper {
+        position: relative;
+        overflow: hidden;
+        display: block;
+        background: rgba(0, 0, 0, 0.2);
+        border: 1px dashed var(--ai-card-border);
+        border-radius: 12px;
+        padding: 2rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .file-upload-wrapper:hover {
+        border-color: var(--ai-accent);
+        background: rgba(99, 102, 241, 0.05);
+    }
+
+    .file-upload-wrapper input[type=file] {
+        position: absolute;
+        left: 0;
+        top: 0;
+        opacity: 0;
+        cursor: pointer;
+        height: 100%;
+        width: 100%;
+    }
+
+    .btn-ai-primary {
+        background: var(--ai-accent);
+        color: white;
+        border: none;
+        padding: 1.1rem 2rem;
+        font-size: 1.125rem;
+        font-weight: 600;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        box-shadow: 0 0 20px var(--ai-accent-glow);
+    }
+
+    .btn-ai-primary:hover {
+        background: #4f46e5;
+        transform: translateY(-2px);
+        box-shadow: 0 0 30px var(--ai-accent-glow);
+    }
+    
+    .btn-ai-primary:disabled {
+        background: #475569;
+        box-shadow: none;
+        transform: none;
+        cursor: not-allowed;
+    }
+
+    @@keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    @@keyframes fadeInDown {
+        from { opacity: 0; transform: translateY(-20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+
+<div class="container" style="max-width: 800px;">
+    <div class="dashboard-header">
+        <div>
+            <h2 style="font-weight: 700; margin-bottom: 0.25rem;">Scan Dashboard</h2>
+            <p style="color: var(--ai-text-muted); margin: 0;">Analyze resume alignment against job descriptions.</p>
+        </div>
+        <div class="credit-pill">
+            <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3.5a.5.5 0 0 1-.5-.5v-3.5A.5.5 0 0 1 8 4z"/>
+            </svg>
+            @ViewBag.Credits Credits
+        </div>
+    </div>
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #fca5a5; padding: 1rem; border-radius: 12px; margin-bottom: 2rem;">
+            <i class="bi bi-exclamation-triangle me-2"></i> @TempData["ErrorMessage"]
+        </div>
+    }
+
+    @if (ViewBag.Credits < 2)
+    {
+        <div style="background: rgba(251, 191, 36, 0.05); border: 1px solid rgba(251, 191, 36, 0.2); padding: 1.5rem; border-radius: 20px; margin-bottom: 2.5rem; display: flex; align-items: center; justify-content: space-between; animation: fadeInUp 0.5s ease-out;">
+            <div style="display: flex; align-items: center; gap: 1.25rem;">
+                <div style="background: rgba(251, 191, 36, 0.2); width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #fbbf24;">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h5 style="color: #fbbf24; margin: 0; font-weight: 600;">Low Credit Balance</h5>
+                    <p style="color: var(--ai-text-muted); margin: 0.25rem 0 0 0; font-size: 0.95rem;">You have only @ViewBag.Credits credits left. Each scan requires 2 credits.</p>
+                </div>
+            </div>
+            <a href="/Credits/Index" class="btn-ai-outline" style="border-color: rgba(251, 191, 36, 0.4); color: #fbbf24; padding: 0.6rem 1.25rem;">
+                Buy Credits
+            </a>
+        </div>
+    }
+
+    <div class="ai-card">
+        <form asp-action="PerformScan" asp-controller="Scanner" method="post" enctype="multipart/form-data" id="scanForm">
+            
+            <div style="margin-bottom: 2rem;">
+                <label class="form-label">1. Upload Resume</label>
+                <div class="file-upload-wrapper" id="fileWrapper">
+                    <svg width="32" height="32" fill="currentColor" viewBox="0 0 16 16" style="color: var(--ai-text-muted); margin-bottom: 1rem;">
+                        <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                        <path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z"/>
+                    </svg>
+                    <h5 style="color: var(--ai-text-main); font-weight: 500;" id="fileName">Click to browse or drag file here</h5>
+                    <p style="color: var(--ai-text-muted); font-size: 0.85rem; margin: 0;">Supports PDF, DOCX (Text only)</p>
+                    <input type="file" name="resumeFile" accept=".pdf,.doc,.docx" required onchange="updateFileName(this)" />
+                </div>
+            </div>
+
+            <div style="margin-bottom: 2.5rem;">
+                <label class="form-label">2. Job Description</label>
+                <textarea name="jobDescription" class="form-control ai-input" rows="8" placeholder="Paste the target job description here..." required></textarea>
+            </div>
+
+            <button type="submit" class="btn-ai-primary" id="scanBtn">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                Run AI Analysis (2 Credits)
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+    const ALLOWED_TYPES = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    const ALLOWED_EXTS  = ['.pdf', '.docx'];
+    const MAX_SIZE_MB   = 10;
+    const MIN_JD_CHARS  = 80;
+
+    function showFileError(msg) {
+        let el = document.getElementById('fileError');
+        if (!el) {
+            el = document.createElement('p');
+            el.id = 'fileError';
+            el.style.cssText = 'color:#f87171;font-size:0.85rem;margin-top:0.5rem;';
+            document.getElementById('fileWrapper').after(el);
+        }
+        el.textContent = msg;
+    }
+
+    function clearFileError() {
+        const el = document.getElementById('fileError');
+        if (el) el.textContent = '';
+    }
+
+    function showJdError(msg) {
+        let el = document.getElementById('jdError');
+        if (!el) {
+            el = document.createElement('p');
+            el.id = 'jdError';
+            el.style.cssText = 'color:#f87171;font-size:0.85rem;margin-top:0.5rem;';
+            document.querySelector('textarea[name="jobDescription"]').after(el);
+        }
+        el.textContent = msg;
+    }
+
+    function clearJdError() {
+        const el = document.getElementById('jdError');
+        if (el) el.textContent = '';
+    }
+
+    function updateFileName(input) {
+        const nameDisplay = document.getElementById('fileName');
+        const wrapper     = document.getElementById('fileWrapper');
+        clearFileError();
+
+        if (!input.files || input.files.length === 0) return;
+
+        const file = input.files[0];
+        const ext  = '.' + file.name.split('.').pop().toLowerCase();
+
+        // ── File type check ──
+        if (!ALLOWED_EXTS.includes(ext)) {
+            showFileError(`❌ Invalid file type "${ext}". Only PDF and DOCX files are accepted.`);
+            input.value = '';
+            nameDisplay.textContent = 'Click to browse or drag file here';
+            nameDisplay.style.color = '';
+            wrapper.style.borderColor = 'rgba(248,113,113,0.6)';
+            wrapper.style.background  = 'rgba(248,113,113,0.05)';
+            return;
+        }
+
+        // ── File size check ──
+        if (file.size > MAX_SIZE_MB * 1024 * 1024) {
+            showFileError(`❌ File is too large (${(file.size/1024/1024).toFixed(1)} MB). Maximum allowed is ${MAX_SIZE_MB} MB.`);
+            input.value = '';
+            nameDisplay.textContent = 'Click to browse or drag file here';
+            nameDisplay.style.color = '';
+            wrapper.style.borderColor = 'rgba(248,113,113,0.6)';
+            wrapper.style.background  = 'rgba(248,113,113,0.05)';
+            return;
+        }
+
+        // ── All good ──
+        nameDisplay.textContent    = `✅ ${file.name} (${(file.size/1024).toFixed(0)} KB)`;
+        nameDisplay.style.color    = '#34d399';
+        wrapper.style.borderColor  = 'var(--ai-accent)';
+        wrapper.style.background   = 'rgba(99, 102, 241, 0.05)';
+    }
+
+    document.getElementById('scanForm').addEventListener('submit', function(e) {
+        let hasError = false;
+
+        // ── Re-validate file on submit ──
+        const fileInput = this.querySelector('input[type="file"]');
+        if (!fileInput.files || fileInput.files.length === 0) {
+            showFileError('❌ Please upload a resume file before scanning.');
+            hasError = true;
+        } else {
+            const ext = '.' + fileInput.files[0].name.split('.').pop().toLowerCase();
+            if (!ALLOWED_EXTS.includes(ext)) {
+                showFileError(`❌ Invalid file type. Only PDF and DOCX are accepted.`);
+                hasError = true;
+            }
+        }
+
+        // ── Validate job description length ──
+        const jdTextarea = this.querySelector('textarea[name="jobDescription"]');
+        const jdText     = jdTextarea ? jdTextarea.value.trim() : '';
+        if (jdText.length < MIN_JD_CHARS) {
+            showJdError(`❌ Job description is too short (${jdText.length} chars). Please paste at least ${MIN_JD_CHARS} characters to get a meaningful analysis.`);
+            hasError = true;
+        } else {
+            clearJdError();
+        }
+
+        if (hasError) {
+            e.preventDefault();
+            return;
+        }
+
+        // ── Disable button and show spinner ──
+        const btn = document.getElementById('scanBtn');
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Analyzing...';
+        btn.disabled  = true;
+    });
+</script>

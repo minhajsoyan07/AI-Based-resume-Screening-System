@@ -1,0 +1,173 @@
+@model AIResumeScreeningSystem.DTOs.JobCardViewModel
+
+@{
+    var companyName = Model.CompanyName;
+    var initials = companyName.Length >= 2 ? companyName.Substring(0, 2).ToUpper() : companyName.ToUpper();
+    
+    string expLevel = "Beginner";
+    string levelClass = "level-beginner";
+    if (Model.MinimumExperience >= 8) { expLevel = "Expert"; levelClass = "level-top"; }
+    else if (Model.MinimumExperience >= 4) { expLevel = "Experienced"; levelClass = "level-experienced"; }
+    else if (Model.MinimumExperience >= 2) { expLevel = "Mid Level"; levelClass = "level-mid"; }
+
+    var daysRemaining = Model.ApplicationDeadline.HasValue ? (int)Math.Ceiling((Model.ApplicationDeadline.Value.Date - DateTime.Now.Date).TotalDays) : -1;
+    var isUrgent = daysRemaining >= 0 && daysRemaining <= 3;
+    var isNew = (DateTime.Now - Model.CreatedDate).TotalDays <= 2;
+    var isGuest = User.Identity?.IsAuthenticated != true;
+}
+
+<div class="job-card">
+    <div class="card-top">
+        <div class="card-logo">
+            @if (!string.IsNullOrEmpty(Model.CompanyLogo))
+            {
+                <img src="@Model.CompanyLogo" alt="@companyName" />
+            }
+            else
+            {
+                <span class="initials">@initials</span>
+            }
+        </div>
+        <div class="card-info">
+            <div class="card-title-row">
+                <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                    <h4 class="card-title" title="@Model.JobTitle">
+                        @Model.JobTitle
+                    </h4>
+                    <span class="level-pill @levelClass">@expLevel</span>
+                </div>
+                
+                <div style="margin-left: auto; position: relative; display: flex; align-items: center; justify-content: center;">
+                    @if (isGuest && !string.IsNullOrEmpty(Model.AttachmentPath))
+                    {
+                        <a href="@Model.AttachmentPath" target="_blank" class="a-btn-icon" title="Circular" style="color: var(--brand-primary); background: transparent; padding: 0.2rem; border-radius:2px;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        </a>
+                        <button type="button" class="bookmark-btn @(Model.IsBookmarked ? "bookmarked" : "")" data-job-id="@Model.JobID" onclick="toggleBookmarkCard(this)" title="@(Model.IsBookmarked ? "Remove from Saved" : "Save Job")" style="position: absolute; top: calc(100% + 0.4rem);">
+                            <svg viewBox="0 0 24 24" fill="@(Model.IsBookmarked ? "currentColor" : "none")" stroke="currentColor" stroke-width="2.5" width="16" height="16"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+                        </button>
+                    }
+                    else
+                    {
+                        <button type="button" class="bookmark-btn @(Model.IsBookmarked ? "bookmarked" : "")" data-job-id="@Model.JobID" onclick="toggleBookmarkCard(this)" title="@(Model.IsBookmarked ? "Remove from Saved" : "Save Job")">
+                            <svg viewBox="0 0 24 24" fill="@(Model.IsBookmarked ? "currentColor" : "none")" stroke="currentColor" stroke-width="2.5" width="16" height="16"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+                        </button>
+                    }
+                </div>
+            </div>
+            <div class="card-company">@companyName</div>
+            <div class="card-meta">
+                <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> @(Model.Location ?? "Bangladesh")</span>
+                <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg> @Model.JobType</span>
+            </div>
+            <div class="card-salary">
+                <div style="display: flex; align-items: center; gap: 0.3rem;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M12 16v-8"/><path d="M8 12h8"/></svg>
+                    @if (Model.SalaryMax > 0)
+                    {
+                        <span>৳@Model.SalaryMin.ToString("N0") - @Model.SalaryMax.ToString("N0")</span>
+                    }
+                    else
+                    {
+                        <span>Negotiable</span>
+                    }
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 0.4rem;">
+                    @if (Model.MatchScore.HasValue)
+                    {
+                        var score = Model.MatchScore.Value;
+                        var scoreClass = score >= 80 ? "match-high" : (score >= 50 ? "match-mid" : "match-low");
+                        <span class="job-match-pill @scoreClass" style="margin-bottom: 0; font-size: 0.65rem; padding: 0.15rem 0.6rem;">@score.ToString("0")% Match</span>
+                    }
+                    @if (!Model.IsRecommended && daysRemaining >= 0 && (ViewData["MoveDaysLeftUpper"] as bool?) != true && !isGuest)
+                    {
+                        <span class="days-left-tag @(isUrgent ? "urgent-tag" : "")" style="font-size: 0.6rem; font-weight: 800; padding: 0.15rem 0.5rem; text-transform:none;">
+                            @(daysRemaining == 0 ? "Last Day" : $"{daysRemaining} Days Left")
+                        </span>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    @if ((Model.MatchedSkills?.Any() == true) || (Model.MissingSkills?.Any() == true))
+    {
+        <div class="job-card-skills-row">
+            <div style="display: flex; flex-direction: column; gap: 0.4rem; align-items: flex-start; flex: 1;">
+                @if (Model.MatchedSkills?.Any() == true)
+                {
+                    <div style="display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center;">
+                        <span style="font-size: 0.65rem; font-weight: 800; color: var(--text-muted); text-transform:none;">Matches</span>
+                        @foreach (var s in Model.MatchedSkills.Take(4))
+                        {
+                            <span class="job-skill-badge job-skill-match">@s</span>
+                        }
+                    </div>
+                }
+                @if (Model.MissingSkills?.Any() == true)
+                {
+                    <div style="display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center;">
+                        <span style="font-size: 0.65rem; font-weight: 800; color: var(--text-muted); text-transform:none;">Gaps</span>
+                        @foreach (var s in Model.MissingSkills.Take(3))
+                        {
+                            <span class="job-skill-badge job-skill-gap">@s</span>
+                        }
+                    </div>
+                }
+            </div>
+            @if ((ViewData["MoveDaysLeftUpper"] as bool?) == true && daysRemaining >= 0 && !isGuest)
+            {
+                <span class="days-left-tag @(isUrgent ? "urgent-tag" : "")" style="font-size: 0.6rem; font-weight: 800; padding: 0.15rem 0.5rem; text-transform:none;">
+                    @(daysRemaining == 0 ? "Last Day" : $"{daysRemaining} Days Left")
+                </span>
+            }
+        </div>
+    }
+    else if ((ViewData["MoveDaysLeftUpper"] as bool?) == true && daysRemaining >= 0 && !isGuest)
+    {
+        <div class="job-card-skills-row" style="justify-content: flex-end;">
+            <span class="days-left-tag @(isUrgent ? "urgent-tag" : "")" style="font-size: 0.6rem; font-weight: 800; padding: 0.15rem 0.5rem; text-transform:none;">
+                @(daysRemaining == 0 ? "Last Day" : $"{daysRemaining} Days Left")
+            </span>
+        </div>
+    }
+
+    <div class="card-footer">
+        <div class="card-dates-h">
+            <div class="date-line date-posted" title="Posted Date">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <span>Posted <b>@Model.CreatedDate.ToString("dd MMM")</b></span>
+            </div>
+            <div class="date-divider"></div>
+            <div class="date-line @(isUrgent ? "urgent-text" : "date-deadline")" title="Deadline">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                <span>Ends <b>@(Model.ApplicationDeadline?.ToString("dd MMM") ?? "N/A")</b></span>
+            </div>
+        </div>
+        <div class="card-actions">
+            <button type="button" class="a-btn-icon" onclick="navigator.clipboard.writeText(window.location.origin + '/Applicant/JobDetails?jobId=@Model.JobID'); showToast('Link copied!', 'success')" title="Share">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            </button>
+            @if (!isGuest && !string.IsNullOrEmpty(Model.AttachmentPath))
+            {
+                <a href="@Model.AttachmentPath" target="_blank" class="a-btn-icon" title="Circular" style="color: var(--brand-primary); background: var(--brand-light);">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                </a>
+            }
+            @if (Model.IsRecommended && daysRemaining >= 0 && (ViewData["MoveDaysLeftUpper"] as bool?) != true && !isGuest)
+            {
+                <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.25rem;">
+                    <span class="days-left-tag @(isUrgent ? "urgent-tag" : "")" style="font-size: 0.55rem; font-weight: 800; padding: 0.15rem 0.5rem; text-transform:none; margin: 0; border: 1px solid rgba(0,0,0,0.05);">
+                        @(daysRemaining == 0 ? "Last Day" : $"{daysRemaining} Days Left")
+                    </span>
+                    <a href="/Applicant/JobDetails?jobId=@Model.JobID" class="a-btn a-btn-primary" style="padding: 0.35rem 1.25rem; font-size: 0.8rem; min-width: 80px;">View</a>
+                </div>
+            }
+            else
+            {
+                <a href="/Applicant/JobDetails?jobId=@Model.JobID" class="a-btn a-btn-primary" style="padding: 0.4rem 1.25rem; font-size: 0.85rem;">View</a>
+            }
+        </div>
+    </div>
+</div>

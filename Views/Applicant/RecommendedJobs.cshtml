@@ -1,0 +1,447 @@
+@model List<AIResumeScreeningSystem.Interfaces.JobRecommendation>
+@{
+    ViewData["Title"] = "Job Recommendations";
+    Layout = "~/Views/Shared/_ApplicantLayout.cshtml";
+    var bookmarkedIds = ViewBag.BookmarkedJobIds as HashSet<int> ?? new HashSet<int>();
+    
+    var searchQuery = ViewBag.Search as string ?? "";
+    var locationQuery = ViewBag.Location as string ?? "";
+    var selectedJobType = ViewBag.JobType as string ?? "";
+    var selectedExp = ViewBag.MinExperience as string ?? "";
+    var selectedSector = ViewBag.Sector as string ?? "";
+}
+
+<style>
+    .browse-layout {
+        display: flex;
+        gap: 1.5rem;
+        align-items: flex-start;
+        height: 100%;
+        padding: 0; /* Gutter is now handled by container/wrapper to avoid double-padding */
+        overflow: hidden; /* Prevent parent from scrolling */
+    }
+
+    /* Restore 100px explicit gutter strictly for Guest View and constrain height for internal scroll */
+    .container.browse-layout {
+        padding: 0 100px;
+        height: calc(100vh - 117px); /* Viewport height minus header (85px) and top margin (32px) */
+    }
+
+    /* Propagate full height so filter sidebar can fill to Sign Out button level */
+    .browse-wrapper-inner,
+    .browse-wrapper-inner > form {
+        height: 100%;
+        font-family: 'SolaimanLipi', 'Inter', -apple-system, blinkmacsystemfont, sans-serif !important;
+    }
+
+    /* Filters Sidebar */
+    .filters-sidebar {
+        width: 202px; /* Reduced by 3% as requested */
+        flex-shrink: 0;
+        position: sticky;
+        top: 0;
+        height: 100%; 
+        overflow: hidden;
+        background: var(--bg-white);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        padding: 1.25rem 0.85rem; /* Increased to 4% right nudge as requested */
+    }
+
+    .filter-group {
+        margin-bottom: 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--border-light);
+    }
+    .filter-group:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+        padding-bottom: 0;
+    }
+
+    .filter-title {
+        font-size: 0.75rem;
+        font-weight: 800;
+        color: var(--text-muted);
+        margin-bottom: 1rem;
+        text-transform:none;
+        letter-spacing: 0.05em;
+    }
+
+    .filter-options-list {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .filter-option {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.45rem;
+        cursor: pointer;
+        transition: color 0.2s;
+    }
+    .filter-option:last-child { margin-bottom: 0; }
+
+    .filter-option input[type="radio"] {
+        appearance: none;
+        width: 18px;
+        height: 18px;
+        border: 2px solid var(--border-color);
+        border-radius: 50%;
+        transition: all 0.2s;
+        position: relative;
+        cursor: pointer;
+        background: white;
+        flex-shrink: 0;
+    }
+    
+    .filter-option input[type="radio"]:checked {
+        border-color: var(--brand-primary);
+    }
+    .filter-option input[type="radio"]:checked::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 10px;
+        height: 10px;
+        background: var(--brand-primary);
+        border-radius: 50%;
+    }
+
+    .filter-label {
+        font-size: 0.9rem;
+        color: var(--text-main);
+        font-weight: 500;
+    }
+    .filter-option:hover .filter-label { color: var(--brand-primary); }
+    .filter-option input:checked + .filter-label { color: var(--brand-primary); font-weight: 700; }
+
+    /* Main Content area - The only part that scrolls */
+    .browse-main {
+        flex: 1;
+        min-width: 0;
+        height: 100%;
+        overflow-y: auto;
+        padding-right: 0.5rem; /* Space for scrollbar if needed */
+        scrollbar-width: none; /* Hide scrollbar in Firefox */
+    }
+    .browse-main::-webkit-scrollbar { display: none; } /* Hide in Chrome */
+
+    /* Advanced Search Bar */
+    .search-panel {
+        background: var(--bg-white);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        display: flex; /* Changed to flex for better responsive distribution */
+        padding: 0.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow:none;
+    }
+
+    .search-input-group {
+        display: flex;
+        align-items: center;
+        padding: 0.5rem 0.75rem;
+        gap: 0.5rem;
+        border-right: 1px solid var(--border-light);
+        flex: 1; /* Distribute space evenly */
+        min-width: 140px; /* Prevent extreme shrinking */
+    }
+    .search-input-group:nth-child(1) { flex: 2; min-width: 250px; } /* Title input gets significantly more space */
+    .search-input-group:nth-last-child(2) { border-right: none; }
+
+    .search-input-group input, 
+    .search-input-group select {
+        width: 100%;
+        border: none;
+        outline: none;
+        font-size: 0.85rem; /* Slightly smaller to fit more text */
+        color: var(--text-main);
+        background: transparent;
+        font-weight: 500;
+        text-overflow: ellipsis;
+    }
+    .search-input-group svg { color: var(--brand-primary); width: 18px; height: 18px; opacity: 0.8; }
+
+    .btn-search-main {
+        padding: 0.75rem 2rem;
+        background: var(--brand-primary);
+        color: white;
+        border: none;
+        border-radius: var(--radius-md);
+        font-weight: 700;
+        cursor: pointer;
+        transition: background 0.2s;
+        margin-left: 0.5rem;
+    }
+    .btn-search-main:hover { background: var(--brand-dark); }
+
+    .results-meta {
+        display: flex;
+        justify-content: flex-start; /* Align to the red line as requested */
+        align-items: center;
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid var(--border-light);
+    }
+
+    .results-count { font-size: 0.9rem; color: var(--text-muted); }
+    .results-count strong { color: var(--text-main); font-weight: 800; }
+
+    .jobs-grid-layout {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.25rem;
+    }
+
+    /* Empty state */
+    .no-results {
+        text-align: center;
+        padding: 5rem 2rem;
+        background: var(--bg-white);
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--border-color);
+    }
+
+    @@media (max-width: 1200px) {
+        .search-panel { grid-template-columns: 1.5fr 1fr auto; }
+        .search-input-group:nth-child(3), 
+        .search-input-group:nth-child(4) { display: none; }
+    }
+
+    @@media (max-width: 992px) {
+        .browse-layout { flex-direction: column; }
+        .filters-sidebar { width: 100%; position: static; }
+        .jobs-grid-layout { grid-template-columns: 1fr; }
+    }
+
+    @@media (max-width: 600px) {
+        .search-panel { grid-template-columns: 1fr; gap: 0.5rem; }
+        .search-input-group { border-right: none; border-bottom: 1px solid var(--border-light); }
+        .btn-search-main { margin: 0; }
+    }
+</style>
+
+<div class="browse-wrapper-inner">
+    @Html.AntiForgeryToken()
+    <form method="get" id="browseForm" asp-action="RecommendedJobs">
+        <div class="browse-layout">
+            
+            <!-- Filters Sidebar -->
+            <aside class="filters-sidebar">
+                <div class="filter-group">
+                    <h4 class="filter-title">Job Type</h4>
+                    @{ var jobTypes = new[] { ("", "All Types"), ("Full Time", "Full Time"), ("Part Time", "Part Time"), ("Contractual", "Contractual"), ("Internship", "Internship"), ("Freelance", "Freelance") }; }
+                    <div class="filter-options-list">
+                        @foreach (var (val, label) in jobTypes)
+                        {
+                            <label class="filter-option">
+                                <input type="radio" name="jobType" value="@val" @(selectedJobType == val ? "checked" : "") onchange="this.form.submit()">
+                                <span class="filter-label">@label</span>
+                            </label>
+                        }
+                    </div>
+                </div>
+
+                <div class="filter-group">
+                    <h4 class="filter-title">Salary Range</h4>
+                    @{ 
+                        var salaryRanges = new[] { 
+                            ("", "0", "All Salaries"), 
+                            ("0", "20000", "Below 20k"), 
+                            ("20000", "50000", "20k - 50k"), 
+                            ("50000", "100000", "50k - 100k"), 
+                            ("100000", "1000000", "100k+") 
+                        }; 
+                        var currentSalMin = ViewBag.SalaryMin as string ?? "";
+                    }
+                    <div class="filter-options-list">
+                        @foreach (var (min, max, label) in salaryRanges)
+                        {
+                            <label class="filter-option">
+                                <input type="radio" name="salaryMin" value="@min" @(currentSalMin == min ? "checked" : "") onchange="document.getElementById('salMaxInput').value='@(string.IsNullOrEmpty(min) ? "" : max)'; this.form.submit()">
+                                <span class="filter-label">@label</span>
+                            </label>
+                        }
+                    </div>
+                    <input type="hidden" name="salaryMax" id="salMaxInput" value="@ViewBag.SalaryMax" />
+                </div>
+
+                <div class="filter-group">
+                    <h4 class="filter-title">Date Posted</h4>
+                    @{ 
+                        var dateRanges = new[] { 
+                            ("", "All Time"), 
+                            ("24h", "Last 24 Hours"), 
+                            ("7d", "Last 7 Days"), 
+                            ("30d", "Last 30 Days") 
+                        }; 
+                        var selectedDate = ViewBag.DatePosted as string ?? "";
+                    }
+                    <div class="filter-options-list">
+                        @foreach (var (val, label) in dateRanges)
+                        {
+                            <label class="filter-option">
+                                <input type="radio" name="datePosted" value="@val" @(selectedDate == val ? "checked" : "") onchange="this.form.submit()">
+                                <span class="filter-label">@label</span>
+                            </label>
+                        }
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Main Content Area -->
+            <main class="browse-main" style="padding-top: 1rem;">
+                
+                <div class="rec-header-section" style="margin-bottom: 2rem; margin-top: 0;">
+                    <div class="rec-header-top" style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
+                        <h1 class="rec-title" style="font-size: 1.75rem; font-weight: 800; color: var(--text-main); margin: 0; line-height: 1.1;">Recommended Opportunities</h1>
+                        <div class="rec-badge" style="display: inline-flex; align-items: center; background: #ecfdf5; color: #059669; padding: 0.25rem 0.75rem; border-radius: var(--radius-md); font-weight: 800; font-size: 0.65rem; border: 1px solid #a7f3d0; text-transform:none; letter-spacing: 0.05em;">Personalized Matches</div>
+                    </div>
+                    <p class="rec-subtitle" style="color: var(--text-muted); margin: 0; font-size: 0.9rem;">Jobs tailored to your unique skills, experience, and system profile.</p>
+                </div>
+
+                <!-- Search Panel -->
+                <div class="search-panel">
+                    <div class="search-input-group">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                        <input type="text" name="search" value="@searchQuery" placeholder="Job title, keywords, or company" />
+                    </div>
+                    <div class="search-input-group">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                        <input type="text" name="location" value="@locationQuery" placeholder="City or location" />
+                    </div>
+                    <div class="search-input-group">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        <select name="experience" onchange="this.form.submit()">
+                            <option value="">Experience</option>
+                            <option value="0" selected="@(selectedExp == "0")">Entry Level</option>
+                            <option value="2" selected="@(selectedExp == "2")">Mid Level</option>
+                            <option value="5" selected="@(selectedExp == "5")">Senior Level</option>
+                            <option value="8" selected="@(selectedExp == "8")">Expert</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn-search-main" style="margin-left: 0.5rem;">Search</button>
+                </div>
+
+                <div class="results-meta">
+                    <div class="results-count">Showing <strong>@(ViewBag.TotalCount ?? Model.Count)</strong> personalized recommendations</div>
+                    @if (!string.IsNullOrEmpty(searchQuery) || !string.IsNullOrEmpty(locationQuery) || !string.IsNullOrEmpty(selectedJobType) || !string.IsNullOrEmpty(selectedExp) || !string.IsNullOrEmpty(selectedSector))
+                    {
+                        <a href="/Applicant/RecommendedJobs" class="a-btn a-btn-secondary" style="font-size: 0.75rem; padding: 0.35rem 0.75rem; margin-left: 1rem;">Clear Filters</a>
+                    }
+                </div>
+
+                @if (!Model.Any())
+                {
+                    <div class="no-results">
+                        <div style="font-size:3rem; margin-bottom:1rem;">🔍</div>
+                        <h3 style="font-size:1.5rem; font-weight:800; color:var(--text-main); margin-bottom:0.75rem;">No recommendations found</h3>
+                        <p style="color:var(--text-muted); margin-bottom:2rem;">Try broadening your filters or updating your profile.</p>
+                        <a href="/Applicant/RecommendedJobs" class="a-btn a-btn-primary">Clear all filters</a>
+                    </div>
+                }
+                else
+                {
+                    <div class="jobs-grid-layout">
+                        @{
+                            var jobDbMap = ViewBag.JobDetails as Dictionary<int, AIResumeScreeningSystem.Models.Job>;
+                        }
+                        @foreach (var job in Model)
+                        {
+                            var dbJob = jobDbMap != null && jobDbMap.ContainsKey(job.JobId) ? jobDbMap[job.JobId] : null;
+
+                            var cardVm = new AIResumeScreeningSystem.DTOs.JobCardViewModel
+                            {
+                                JobID = job.JobId,
+                                JobTitle = job.JobTitle,
+                                CompanyName = dbJob?.Company?.CompanyName ?? dbJob?.Recruiter?.CompanyName ?? job.CompanyName,
+                                CompanyLogo = dbJob?.Company?.LogoPath,
+                                Location = job.Location,
+                                JobType = job.JobType,
+                                SalaryMin = dbJob?.SalaryMin ?? 0,
+                                SalaryMax = dbJob?.SalaryMax ?? 0,
+                                MinimumExperience = dbJob?.MinimumExperience ?? 0,
+                                ApplicationDeadline = dbJob?.ApplicationDeadline,
+                                MatchScore = job.MatchScore,
+                                MatchedSkills = job.MatchedSkills,
+                                MissingSkills = job.MissingSkills,
+                                CreatedDate = dbJob?.CreatedDate ?? job.PostedDate,
+                                IsRecommended = true,
+                                AttachmentPath = job.AttachmentPath,
+                                IsBookmarked = bookmarkedIds.Contains(job.JobId)
+                            };
+                            @await Html.PartialAsync("_JobCard", cardVm, new ViewDataDictionary(ViewData) { { "MoveDaysLeftUpper", true } })
+                        }
+                    </div>
+
+                    @if (ViewBag.TotalPages != null && ViewBag.TotalPages > 1)
+                    {
+                        <div style="display:flex; justify-content:center; gap:0.5rem; margin-top:2.5rem; align-items:center;">
+                            @if (ViewBag.CurrentPage > 1)
+                            {
+                                <a href="/Applicant/RecommendedJobs?page=@(ViewBag.CurrentPage - 1)&search=@searchQuery&location=@locationQuery&jobType=@selectedJobType&experience=@selectedExp&salaryMin=@ViewBag.SalaryMin&salaryMax=@ViewBag.SalaryMax&datePosted=@ViewBag.DatePosted" class="a-btn a-btn-secondary" style="font-size:0.8rem;">Prev</a>
+                            }
+                            <span style="font-size:0.85rem; font-weight:700; color:var(--text-muted); margin:0 1rem;">Page @ViewBag.CurrentPage of @ViewBag.TotalPages</span>
+                            @if (ViewBag.CurrentPage < ViewBag.TotalPages)
+                            {
+                                <a href="/Applicant/RecommendedJobs?page=@(ViewBag.CurrentPage + 1)&search=@searchQuery&location=@locationQuery&jobType=@selectedJobType&experience=@selectedExp&salaryMin=@ViewBag.SalaryMin&salaryMax=@ViewBag.SalaryMax&datePosted=@ViewBag.DatePosted" class="a-btn a-btn-secondary" style="font-size:0.8rem;">Next</a>
+                            }
+                        </div>
+                    }
+                }
+            </main>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const content = document.querySelector('.app-content');
+        if (content) {
+            content.classList.add('layout-fixed');
+        }
+    });
+
+    function toggleBookmarkCard(btn) {
+        const jobId = btn.dataset.jobId;
+        if (!jobId) return;
+        const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+        const body = new URLSearchParams();
+        body.append('jobId', jobId);
+        if (token) body.append('__RequestVerificationToken', token);
+        
+        fetch('/Applicant/ToggleBookmark', {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            body: body
+        })
+        .then(r => {
+            if (r.status === 401) { window.location.href = '/Auth/ApplicantLogin'; return null; }
+            return r.json();
+        })
+        .then(data => {
+            if (!data) return;
+            if (data.success) {
+                const isBookmarked = data.isBookmarked;
+                btn.classList.toggle('bookmarked', isBookmarked);
+                btn.title = isBookmarked ? 'Remove from Saved' : 'Save Job';
+                const svg = btn.querySelector('svg');
+                if (svg) {
+                    svg.setAttribute('fill', isBookmarked ? 'currentColor' : 'none');
+                    svg.style.color = isBookmarked ? '#dc2626' : '';
+                }
+                showToast(data.message, 'success');
+            } else {
+                showToast(data.message || 'Please log in to save jobs', 'warning');
+            }
+        })
+        .catch(() => showToast('Could not complete action. Please check your connection or sign in.', 'danger'));
+    }
+</script>
+}

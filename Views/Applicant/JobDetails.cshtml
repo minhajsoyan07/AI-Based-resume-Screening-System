@@ -1,0 +1,528 @@
+@model AIResumeScreeningSystem.Models.Job
+@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor Accessor
+@{ 
+    ViewData["Title"] = Model.JobTitle; 
+    var isUserLoggedIn = User.Identity?.IsAuthenticated == true;
+    var isLoggedInApplicant = isUserLoggedIn && User.IsInRole("Applicant");
+    Layout = isLoggedInApplicant ? "~/Views/Shared/_ApplicantLayout.cshtml" : "~/Views/Shared/_Layout.cshtml";
+    var companyName = Model.Company?.CompanyName ?? Model.Recruiter?.CompanyName ?? "Employer";
+    var logoPath = Model.Company?.LogoPath;
+    var initials = companyName.Length >= 2 ? companyName.Substring(0, 2).ToUpper() : companyName.ToUpper();
+
+    // Banner logic
+    var bannerOptions = new string[] { "/images/banners/banner_office.png", "/images/banners/banner_tech.png" };
+    var bannerPath = Model.Company?.CoverPhotoPath ?? bannerOptions[Model.JobID % bannerOptions.Length];
+}
+
+<style>
+    .job-details-page {
+        font-family: 'SolaimanLipi', 'Inter', -apple-system, sans-serif !important;
+    }
+
+    /* Professional Header Banner */
+    .detail-header {
+        position: relative;
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        margin-bottom: 2rem;
+        margin-top: 0.85rem; /* Vertically align with sidebar text */
+        background: var(--brand-dark);
+        min-height: 200px;
+        display: flex;
+        align-items: flex-end;
+    }
+
+    .detail-header-bg {
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background-image: url('@bannerPath');
+        background-size: cover;
+        background-position: center;
+        opacity: 0.4;
+        z-index: 1;
+    }
+
+    .detail-header-content {
+        position: relative;
+        z-index: 2;
+        width: 100%;
+        padding: 2rem;
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+        background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%);
+    }
+
+    .detail-logo {
+        width: 100px;
+        height: 100px;
+        background: white;
+        border-radius: var(--radius-lg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        overflow: hidden;
+        border: 4px solid rgba(255,255,255,0.1);
+    }
+    .detail-logo img { width: 100%; height: 100%; object-fit: contain; padding: 8px; }
+    .detail-logo .initials { font-size: 2rem; font-weight: 900; color: var(--brand-primary); }
+
+    .detail-id {
+        flex: 1;
+        margin-top: -2%;
+    }
+
+    .detail-title {
+        font-size: 2rem;
+        font-weight: 800;
+        color: white;
+        margin-bottom: 0.5rem;
+        line-height: 1.2;
+    }
+
+    .detail-company-link {
+        font-size: 1rem;
+        color: rgba(255,255,255,0.8);
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    /* Main Grid */
+    .detail-grid {
+        display: grid;
+        grid-template-columns: 1fr 360px;
+        gap: 2rem;
+    }
+
+    .detail-main {
+        min-width: 0;
+    }
+
+    .detail-section {
+        background: var(--bg-white);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        padding: 2rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .detail-section-title {
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: var(--text-main);
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    .detail-section-title::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: var(--border-light);
+    }
+
+    .rich-text-content {
+        font-size: 1rem;
+        line-height: 1.7;
+        color: var(--text-main);
+    }
+    .rich-text-content h4 { font-weight: 800; margin-top: 1.5rem; margin-bottom: 0.75rem; color: var(--brand-dark); }
+    .rich-text-content ul { padding-left: 1.5rem; margin-bottom: 1rem; }
+    .rich-text-content li { margin-bottom: 0.5rem; }
+
+    /* Key Info Strip */
+    .info-strip {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        background: var(--bg-white);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        margin-bottom: 1.5rem;
+        overflow: hidden;
+    }
+
+    .info-strip-item {
+        padding: 1.25rem;
+        border-right: 1px solid var(--border-light);
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+    .info-strip-item:last-child { border-right: none; }
+
+    .info-strip-label { font-size: 0.7rem; font-weight: 700; color: var(--text-muted); text-transform:none; letter-spacing: 0.05em; }
+    .info-strip-value { font-size: 1rem; font-weight: 800; color: var(--text-main); }
+
+    /* Sidebar Actions */
+    .detail-sidebar {
+        position: sticky;
+        top: 20px;
+        height: fit-content;
+    }
+
+    .action-panel {
+        background: var(--bg-white);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        padding: 1.5rem;
+        box-shadow:none;
+    }
+
+    .match-card {
+        background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+        border: 1px solid #bbf7d0;
+        border-radius: var(--radius-lg);
+        padding: 1.25rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .match-percent { font-size: 2.25rem; font-weight: 900; color: #16a34a; line-height: 1; }
+    .match-lbl { font-size: 0.85rem; font-weight: 700; color: #15803d; }
+
+    /* Modals & Inputs */
+    .modern-modal-content {
+        background: var(--bg-white);
+        border-radius:2px;
+        overflow: hidden;
+        box-shadow:none;
+    }
+
+    @@media (max-width: 1024px) {
+        .detail-grid { grid-template-columns: 1fr; }
+        .detail-sidebar { position: static; }
+        .info-strip { grid-template-columns: 1fr 1fr; }
+    }
+
+    @@media (max-width: 600px) {
+        .info-strip { grid-template-columns: 1fr; }
+        .detail-header-content { flex-direction: column; text-align: center; }
+    }
+</style>
+
+<div class="@(isLoggedInApplicant ? "job-details-page" : "container job-details-page")">
+    @Html.AntiForgeryToken()
+    
+    <!-- Hero Banner -->
+    <header class="detail-header">
+        <div class="detail-header-bg"></div>
+        <div class="detail-header-content">
+            <div class="detail-logo">
+                @if (!string.IsNullOrEmpty(logoPath)) { <img src="@logoPath" alt="@companyName" /> }
+                else { <span class="initials">@initials</span> }
+            </div>
+            <div class="detail-id">
+                <h1 class="detail-title">@Model.JobTitle</h1>
+                <div class="detail-company-link">
+                    @companyName 
+                    <span style="opacity: 0.5;">•</span>
+                    <span style="font-size: 0.85rem; opacity: 0.9;">Posted @Model.CreatedDate.ToString("MMM dd, yyyy")</span>
+                </div>
+            </div>
+            @if (!string.IsNullOrEmpty(Model.AttachmentPath))
+            {
+                <a href="@Model.AttachmentPath" target="_blank" style="align-self: flex-start; margin-top: 1rem; background: #0284c7; color: white; padding: 0.65rem 1.25rem; border-radius: 8px; font-weight: 600; text-decoration: none; border: none; display: flex; align-items: center; gap: 0.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.2); backdrop-filter: blur(4px);">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v4a2 2 0 01 2-2h14a2 2 0 01 2 2z"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Download Circular
+                </a>
+            }
+        </div>
+    </header>
+
+    <!-- Key Info Strip -->
+    <div class="info-strip">
+        <div class="info-strip-item">
+            <span class="info-strip-label">Job Type</span>
+            <span class="info-strip-value">@Model.JobType</span>
+        </div>
+        <div class="info-strip-item">
+            <span class="info-strip-label">Experience</span>
+            <span class="info-strip-value">@(Model.MinimumExperience)+ Years</span>
+        </div>
+        <div class="info-strip-item">
+            <span class="info-strip-label">Deadline</span>
+            <span class="info-strip-value" style="color: var(--accent-red);">@(Model.ApplicationDeadline?.ToString("dd MMM yyyy") ?? "Open")</span>
+        </div>
+        <div class="info-strip-item">
+            <span class="info-strip-label">Salary Range</span>
+            <span class="info-strip-value">@(Model.SalaryMax > 0 ? $"৳{Model.SalaryMin:N0} - {Model.SalaryMax:N0}" : "Negotiable")</span>
+        </div>
+    </div>
+
+    <!-- Main Content Layout -->
+    <div class="detail-grid">
+        
+        <main class="detail-main">
+            <!-- Description -->
+            <section class="detail-section">
+                <h2 class="detail-section-title">Job Description</h2>
+                <div class="rich-text-content">
+                    @if (string.IsNullOrWhiteSpace(Model.JobDescription)) { <p>No detailed description provided.</p> }
+                    else { @Html.Raw(Model.JobDescription) }
+                </div>
+            </section>
+
+            <!-- Skills -->
+            @if (!string.IsNullOrEmpty(Model.RequiredSkills))
+            {
+                <section class="detail-section">
+                    <h2 class="detail-section-title">Required Skills</h2>
+                    <div style="display: flex; flex-wrap: wrap; gap: 0.75rem;">
+                        @foreach (var skill in Model.RequiredSkills.Split(',', StringSplitOptions.RemoveEmptyEntries))
+                        {
+                            <span class="a-badge" style="background:var(--brand-light); color:var(--brand-primary); padding:0.4rem 1rem; border-radius:2px; font-weight:700; font-size:0.85rem;">@skill.Trim()</span>
+                        }
+                    </div>
+                </section>
+            }
+
+            <!-- Company Info -->
+            @if (!string.IsNullOrEmpty(Model.Company?.AboutOrganization))
+            {
+                <section class="detail-section" style="background: #fafafa;">
+                    <h2 class="detail-section-title">About @companyName</h2>
+                    <p style="color: var(--text-muted); line-height: 1.6;">@Model.Company.AboutOrganization</p>
+                </section>
+            }
+        </main>
+
+        <aside class="detail-sidebar">
+            <!-- Match Score if Logged In -->
+            @if (isUserLoggedIn && ViewBag.QuickMatchScore != null)
+            {
+                var score = (decimal)ViewBag.QuickMatchScore;
+                var color = score >= 70 ? "#16a34a" : score >= 40 ? "#d97706" : "#dc2626";
+                <div class="match-card">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 0.75rem;">
+                        <div>
+                            <div class="match-percent" style="color: @color">@score.ToString("F0")%</div>
+                            <div class="match-lbl">Profile Match</div>
+                        </div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700;">AI Computed</div>
+                    </div>
+                    <div style="background: #e2e8f0; height: 8px; border-radius:2px; overflow: hidden;">
+                        <div style="background: @color; height: 100%; width: @score.ToString("F0")%; transition: width 1s;"></div>
+                    </div>
+                    <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.75rem;">Based on your skills, experience, and education matching this role.</p>
+                </div>
+            }
+
+            <!-- Apply Panel -->
+            <div class="action-panel">
+                @if ((bool)(ViewBag.AlreadyApplied ?? false))
+                {
+                    <div style="background: #f0fdf4; border: 1px solid #bbf7d0; color: #16a34a; padding: 1rem; border-radius:2px; text-align: center; font-weight: 700; margin-bottom: 1rem;">
+                        ✓ Application Submitted
+                    </div>
+                    <a href="/Applicant/MyApplications" class="a-btn a-btn-secondary" style="width: 100%; text-align: center;">View Status</a>
+                }
+                else
+                {
+                    <button onclick="openApplyModal()" class="a-btn a-btn-primary" style="width: 100%; padding: 1rem; font-size: 1.1rem; margin-bottom: 1rem;">Apply for Job</button>
+                    
+                    @if (isUserLoggedIn)
+                    {
+                        <button id="saveJobBtn" onclick="toggleBookmark(@Model.JobID)" class="a-btn a-btn-secondary" style="width: 100%; text-align: center;">
+                            <span id="saveJobBtnText">♡ Save this Job</span>
+                        </button>
+                    }
+                }
+
+                <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border-light);">
+                    <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.75rem; text-transform:none;">Job Summary</div>
+                    <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                        <div style="display: flex; justify-content: space-between; font-size: 0.875rem;">
+                            <span style="color: var(--text-muted);">ID:</span>
+                            <span style="font-weight: 700; color: var(--text-main);">#@Model.JobID</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.875rem;">
+                            <span style="color: var(--text-muted);">Sector:</span>
+                            <span style="font-weight: 700; color: var(--text-main);">@(Model.JobSector ?? "General")</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.875rem;">
+                            <span style="color: var(--text-muted);">Location:</span>
+                            <span style="font-weight: 700; color: var(--text-main);">@(Model.JobLocation ?? "Not Fixed")</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+    </div>
+</div>
+
+<!-- Modal Structure preserved but with updated styles -->
+<div id="applyModal" class="modal-backdrop" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:9999;  align-items:center; justify-content:center;">
+    <div class="modern-modal-content" style="width:95%; max-width:600px;">
+        <div style="padding:1.5rem 2rem; background:var(--brand-dark); color:white; display:flex; justify-content:space-between; align-items:center;">
+            <h3 style="margin:0; font-size:1.25rem; font-weight:800; color: white;">Apply to @Model.JobTitle</h3>
+            <button onclick="closeApplyModal()" style="background:transparent; border:none; color:white; font-size:1.5rem; cursor:pointer;">&times;</button>
+        </div>
+        <div style="padding:2rem;">
+            <form id="applyForm" enctype="multipart/form-data">
+                <input type="hidden" name="JobID" value="@Model.JobID" />
+                <input type="hidden" id="useExistingResumeInput" name="UseExistingResume" value="false" />
+                
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1.5rem;">
+                    @{ var hasCV = !string.IsNullOrEmpty(ViewBag.UserResumePath as string); }
+                    <div class="choice-card" id="choiceExisting" onclick="@(hasCV ? "selectCVSource('existing')" : "")" style="padding:1rem; border:2px solid #e2e8f0; border-radius:2px; cursor:@(hasCV ? "pointer" : "not-allowed"); opacity:@(hasCV ? "1" : "0.5"); background:white;">
+                        <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.25rem;">
+                            <div class="radio-dot" style="width:16px; height:16px; border:2px solid var(--brand-primary); border-radius:2px; display:flex; align-items:center; justify-content:center;">
+                                <div class="inner" style="width:8px; height:8px; background:var(--brand-primary); border-radius:2px; display:none;"></div>
+                            </div>
+                            <span style="font-weight:700; font-size:0.9rem;">Profile CV</span>
+                        </div>
+                        <p style="font-size:0.7rem; color:var(--text-muted); margin:0;">@(hasCV ? "Use resume on your portal" : "No resume found")</p>
+                    </div>
+
+                    <div class="choice-card" id="choiceUpload" onclick="selectCVSource('upload')" style="padding:1rem; border:2px solid var(--brand-primary); border-radius:2px; cursor:pointer; background:white;">
+                        <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.25rem;">
+                            <div class="radio-dot" style="width:16px; height:16px; border:2px solid var(--brand-primary); border-radius:2px; display:flex; align-items:center; justify-content:center;">
+                                <div class="inner" style="width:8px; height:8px; background:var(--brand-primary); border-radius:2px; display:block;"></div>
+                            </div>
+                            <span style="font-weight:700; font-size:0.9rem;">Upload New</span>
+                        </div>
+                        <p style="font-size:0.7rem; color:var(--text-muted); margin:0;">Upload PDF/DOCX for this job</p>
+                    </div>
+                </div>
+
+                <div id="uploadSection" style="margin-bottom:1.5rem;">
+                    <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.5rem;">Select CV File</label>
+                    <input type="file" id="resumeFileInput" name="ResumeFile" accept=".pdf,.doc,.docx" class="a-input" style="width:100%;" required>
+                </div>
+
+                <div style="margin-bottom:1.5rem;">
+                    <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:0.5rem;">Cover Note (Optional)</label>
+                    <textarea name="CoverLetter" rows="6" class="a-input" style="width:100%; resize:none;" placeholder="Tell the recruiter why you're a fit..."></textarea>
+                </div>
+
+                <div id="applyStatus" style="display:none; margin-bottom:1.5rem; padding:1rem; border-radius:2px; font-size:0.85rem; font-weight:600;"></div>
+
+                <button type="submit" id="submitApplyBtn" class="a-btn a-btn-primary" style="width:100%; padding:1rem;">Submit Application</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    function selectCVSource(source) {
+        const ce = document.getElementById('choiceExisting');
+        const cu = document.getElementById('choiceUpload');
+        const section = document.getElementById('uploadSection');
+        const input = document.getElementById('useExistingResumeInput');
+        const fileInput = document.getElementById('resumeFileInput');
+
+        if (source === 'existing') {
+            ce.style.borderColor = 'var(--brand-primary)';
+            ce.querySelector('.inner').style.display = 'block';
+            cu.style.borderColor = '#e2e8f0';
+            cu.querySelector('.inner').style.display = 'none';
+            section.style.display = 'none';
+            fileInput.required = false;
+            input.value = 'true';
+        } else {
+            cu.style.borderColor = 'var(--brand-primary)';
+            cu.querySelector('.inner').style.display = 'block';
+            ce.style.borderColor = '#e2e8f0';
+            ce.querySelector('.inner').style.display = 'none';
+            section.style.display = 'block';
+            fileInput.required = true;
+            input.value = 'false';
+        }
+    }
+
+    function openApplyModal() {
+        if (!@isUserLoggedIn.ToString().ToLower()) {
+            window.location.href = '/Auth/ApplicantLogin?ReturnUrl=' + encodeURIComponent(window.location.pathname + window.location.search);
+            return;
+        }
+        document.getElementById('applyModal').style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+        const hasCV = @((!string.IsNullOrEmpty(ViewBag.UserResumePath as string)).ToString().ToLower());
+        selectCVSource(hasCV ? 'existing' : 'upload');
+    }
+
+    function closeApplyModal() {
+        document.getElementById('applyModal').style.display = 'none';
+        document.body.style.overflow = 'auto';
+    }
+
+    document.getElementById('applyForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const btn = document.getElementById('submitApplyBtn');
+        const status = document.getElementById('applyStatus');
+        const formData = new FormData(this);
+
+        btn.disabled = true;
+        btn.innerText = 'Processing...';
+        status.style.display = 'none';
+
+        try {
+            const resp = await fetch('/api/applications/apply', { method: 'POST', body: formData });
+            const result = await resp.json();
+            if (result.success) {
+                status.style.display = 'block';
+                status.style.background = '#f0fdf4';
+                status.style.color = '#16a34a';
+                status.innerHTML = `<strong>Success!</strong> ${result.message}`;
+                btn.style.display = 'none';
+                setTimeout(() => window.location.href = '/Applicant/MyApplications', 2000);
+            } else {
+                throw new Error(result.message || 'Submission failed');
+            }
+        } catch (error) {
+            status.style.display = 'block';
+            status.style.background = '#fef2f2';
+            status.style.color = '#dc2626';
+            status.innerText = error.message;
+            btn.disabled = false;
+            btn.innerText = 'Try Again';
+        }
+    });
+
+    // Bookmark Toggle Logic
+    const isNowLoggedIn = @isUserLoggedIn.ToString().ToLower();
+    const currentJobId = @Model.JobID;
+
+    if (isNowLoggedIn) {
+        fetch(`/Applicant/IsBookmarked?jobId=${currentJobId}`).then(r => r.json()).then(data => {
+            if (data.isBookmarked) updateBMUI(true);
+        }).catch(() => {});
+    }
+
+    function toggleBookmark(jobId) {
+        const body = new URLSearchParams(); body.append('jobId', jobId);
+        const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+        if (token) body.append('__RequestVerificationToken', token);
+
+        fetch('/Applicant/ToggleBookmark', { 
+            method: 'POST', 
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            body: body 
+        })
+        .then(r => r.json())
+        .then(data => { 
+            if (data.success) {
+                updateBMUI(data.isBookmarked);
+                showToast(data.message, 'success');
+            } else {
+                showToast(data.message, 'warning');
+            }
+        })
+        .catch(() => showToast('Action failed. Please check your connection.', 'danger'));
+    }
+
+    function updateBMUI(isB) {
+        const btn = document.getElementById('saveJobBtnText');
+        btn.innerHTML = isB ? '♥ Saved to My Jobs' : '♡ Save this Job';
+        btn.parentElement.style.borderColor = isB ? '#ef4444' : '';
+        btn.parentElement.style.color = isB ? '#dc2626' : '';
+        btn.parentElement.style.background = isB ? '#fff5f5' : '';
+    }
+</script>
+}

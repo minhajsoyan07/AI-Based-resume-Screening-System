@@ -1,0 +1,147 @@
+@model AIResumeScreeningSystem.DTOs.RegisterDTO
+@{
+    ViewData["Title"] = "Employer Registration";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container" style="padding-top: 1rem; padding-bottom: 2rem;">
+    <div class="reg-page-header">
+        <h1>Employer Registration</h1>
+        <p>Join our platform to reach thousands of qualified candidates</p>
+    </div>
+
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="alert" style="background:#fef2f2; color:#ef4444; padding:0.75rem; border-radius:2px; margin-bottom:1rem; border:1px solid #fca5a5; font-size:0.9rem;">
+            <div asp-validation-summary="All"></div>
+        </div>
+    }
+
+    <form asp-action="Register" method="post" id="regForm">
+        <input type="hidden" asp-for="Role" value="Recruiter" />
+        
+        <div class="card" style="box-shadow:none; border: 1px solid var(--border-color); padding: 0; margin-bottom: 0.75rem;">
+            <div class="card-header reg-card-header">
+                <h3>Account Login Info</h3>
+            </div>
+            <div class="card-body" style="padding: 1.25rem 1.5rem;">
+                <div class="grid-cols-3">
+                    <div class="form-group" style="margin: 0;">
+                        <label class="form-label" style="font-weight: 500;">User name <span class="required" style="color:red;">*</span></label>
+                        <input asp-for="FullName" class="form-control" placeholder="Enter your user name" required />
+                        <span asp-validation-for="FullName" class="text-danger"></span>
+                    </div>
+                    <div class="form-group" style="margin: 0;">
+                        <label class="form-label" style="font-weight: 500;">Password <span class="required" style="color:red;">*</span></label>
+                        <div style="position: relative; display: flex; align-items: center;">
+                            <input type="password" asp-for="Password" class="form-control" placeholder="Enter your password" required style="padding-right: 2.5rem;" />
+                            <button type="button" onclick="togglePasswordVisibility(this)" style="position: absolute; right: 10px; background: none; border: none; cursor: pointer; color: #64748b; padding: 0; display: flex; align-items: center; justify-content: center;">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                            </button>
+                        </div>
+                        <span asp-validation-for="Password" class="text-danger"></span>
+                    </div>
+                    <div class="form-group" style="margin: 0;">
+                        <label class="form-label" style="font-weight: 500;">Confirm Password <span class="required" style="color:red;">*</span></label>
+                        <div style="position: relative; display: flex; align-items: center;">
+                            <input type="password" asp-for="ConfirmPassword" class="form-control" placeholder="Confirm your password" required style="padding-right: 2.5rem;" />
+                            <button type="button" onclick="togglePasswordVisibility(this)" style="position: absolute; right: 10px; background: none; border: none; cursor: pointer; color: #64748b; padding: 0; display: flex; align-items: center; justify-content: center;">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                            </button>
+                        </div>
+                        <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" style="box-shadow:none; border: 1px solid var(--border-color); padding: 0;">
+            <div class="card-header reg-card-header">
+                <h3>Contact Information</h3>
+            </div>
+            <div class="card-body" style="padding: 1.25rem 1.5rem;">
+                <div class="grid-cols-2" style="margin-bottom: 1.5rem;">
+                    <div class="form-group" style="margin: 0;">
+                        <label class="form-label" style="font-weight: 500;">Email <span class="required" style="color:red;">*</span></label>
+                        <input type="email" asp-for="Email" class="form-control" placeholder="Enter your email" required />
+                        <span asp-validation-for="Email" class="text-danger"></span>
+                    </div>
+                    <div class="form-group" style="margin: 0;">
+                        <label class="form-label" style="font-weight: 500;">Mobile number <span class="required" style="color:red;">*</span></label>
+                        <input asp-for="PhoneNumber" class="form-control" placeholder="01XXXXXXXXX" pattern="^01[3-9]\d{8}$" maxlength="11" oninput="this.value = this.value.replace(/[^0-9]/g, '');" />
+                        <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="padding: 1rem 1.5rem; display: flex; justify-content: flex-end;">
+                <button type="button" onclick="showOtp()" class="btn btn-primary" style="padding: 0.65rem 2.5rem; background: var(--brand-dark); border-radius:2px; font-weight: 600;">Next</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- OTP Modal -->
+<div id="otpModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); align-items:center; justify-content:center; z-index:2000;">
+    <div style="background:white; padding: 2.5rem; border-radius:2px; width:100%; max-width:550px; text-align:center; position:relative; box-shadow:none;">
+        <button onclick="document.getElementById('otpModal').style.display='none'" style="position:absolute; top: 1.25rem; right: 1.25rem; background:transparent; border:none; font-size:1.5rem; cursor:pointer; color:#94a3b8;">&times;</button>
+        
+        <h3 style="font-weight:700; font-size:1.5rem; color:#1e293b; margin-bottom:0.5rem;">Verify Your Email</h3>
+        <p style="color:#64748b; margin-bottom:2rem; font-size:0.95rem;">Enter the 6-digit OTP sent to your email.</p>
+        
+        <div style="display:flex; gap:0.75rem; justify-content:center; margin-bottom:2rem;">
+            @for(int i=0; i<6; i++) {
+                <input type="text" id="otp_@i" maxlength="1" style="width:45px; height:55px; border-radius:2px; border:1px solid #cbd5e1; text-align:center; font-size:1.5rem; color:#1e293b; outline:none; transition: border-color 0.2s;" />
+            }
+        </div>
+
+        <div style="display:flex; justify-content:center; align-items:center; gap:2rem;">
+            <a href="javascript:void(0)" onclick="showOtp()" style="color: #64748b; font-size: 0.9rem; text-decoration: none; font-weight: 500;">Resend OTP</a>
+            <button onclick="document.getElementById('regForm').submit()" class="btn btn-primary" style="padding: 0.75rem 2.5rem; background: var(--brand-primary); font-weight: 600;">Verify OTP</button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        // Username regex validation
+        $('input[name="FullName"]').on('input', function() {
+            const input = $(this);
+            const val = input.val();
+            const errorSpan = input.siblings('.text-danger');
+            const regex = /^[a-zA-Z0-9]+$/;
+
+            if (val && !regex.test(val)) {
+                input.addClass('is-invalid');
+                errorSpan.text("User name can only contain letters and numbers (no spaces or special characters)").show();
+            } else {
+                input.removeClass('is-invalid');
+                errorSpan.hide();
+            }
+        });
+
+        function showOtp() {
+            const form = $('#regForm');
+            if (form.valid() && !$('.is-invalid').filter(':visible').length) {
+                document.getElementById('otpModal').style.display = 'flex';
+                // Mock OTP
+                const gen = Math.floor(100000 + Math.random() * 900000).toString();
+                for (let i = 0; i < 6; i++) {
+                    setTimeout(() => { 
+                        const el = document.getElementById('otp_' + i);
+                        if(el) el.value = gen[i];
+                    }, i * 150);
+                }
+            } else {
+                const firstError = $('.input-validation-error, .is-invalid').filter(':visible').first();
+                if (firstError.length) {
+                    $('html, body').animate({
+                        scrollTop: firstError.offset().top - 150
+                    }, 500);
+                    firstError.focus();
+                }
+            }
+        }
+    </script>
+}

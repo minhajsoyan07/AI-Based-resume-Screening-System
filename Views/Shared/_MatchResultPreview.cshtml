@@ -1,0 +1,237 @@
+@model AIResumeScreeningSystem.DTOs.AIMatchResult
+
+<div class="match-result-container @(Model.IsLocked ? "locked" : "")">
+    <div class="match-header">
+        <div class="score-circle">
+            <svg viewBox="0 0 36 36" class="circular-chart">
+                <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                <path class="circle @(Model.MatchScore >= 70 ? "high" : Model.MatchScore >= 40 ? "mid" : "low")"
+                      stroke-dasharray="@Model.MatchScore, 100"
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+            </svg>
+            <div class="percentage">@(Model.IsLocked ? "??" : Model.MatchScore.ToString("0"))%</div>
+        </div>
+        <div class="match-meta">
+            <h3>AI Matching Analysis</h3>
+            <p>@Model.Summary</p>
+        </div>
+    </div>
+
+    @if (Model.IsLocked)
+    {
+        <div class="locked-overlay">
+            <div class="lock-content">
+                <div class="lock-icon">🔒</div>
+                <h4>Detailed Analysis Locked</h4>
+                <p>Sign up or Login to view your full skill breakdown, missing skills, and improvement tips.</p>
+                <div class="lock-actions">
+                    <a href="/Auth/JobSeekerRegister" class="btn-unlock-primary">Create Free Account</a>
+                    <a href="/Auth/Login" class="btn-unlock-outline">Login</a>
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="match-details">
+        <div class="detail-section">
+            <h4><span class="dot green"></span> Matched Skills</h4>
+            <div class="skill-tags">
+                @foreach (var skill in Model.MatchedSkills)
+                {
+                    <span class="skill-tag matched">@skill</span>
+                }
+                @if (!Model.MatchedSkills.Any()) { <span class="no-data">No direct matches found</span> }
+            </div>
+        </div>
+
+        <div class="detail-section">
+            <h4><span class="dot red"></span> Missing Skills</h4>
+            <div class="skill-tags">
+                @foreach (var skill in Model.MissingSkills)
+                {
+                    <span class="skill-tag missing">@skill</span>
+                }
+                @if (!Model.MissingSkills.Any()) { <span class="no-data">Excellent! No major gaps found</span> }
+            </div>
+        </div>
+
+        <div class="detail-section">
+            <h4><span class="dot purple"></span> Strengths</h4>
+            <p class="strength-text">@Model.Strengths</p>
+        </div>
+
+        <div class="detail-section">
+            <h4><span class="dot orange"></span> Improvement Tips</h4>
+            <ul class="tips-list">
+                @foreach (var tip in Model.ImprovementTips)
+                {
+                    <li>@tip</li>
+                }
+            </ul>
+        </div>
+    </div>
+</div>
+
+<style>
+    .match-result-container {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 1.5rem;
+        position: relative;
+        overflow: hidden;
+        margin-top: 1.5rem;
+    }
+
+    .match-result-container.locked .match-details {
+        filter: blur(8px);
+        pointer-events: none;
+        user-select: none;
+        opacity: 0.5;
+    }
+
+    .match-header {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+        border-bottom: 1px solid #f1f5f9;
+        padding-bottom: 1.5rem;
+    }
+
+    .score-circle {
+        width: 100px;
+        height: 100px;
+        position: relative;
+        flex-shrink: 0;
+    }
+
+    .circular-chart {
+        display: block;
+        max-width: 100%;
+        max-height: 100%;
+    }
+
+    .circle-bg {
+        fill: none;
+        stroke: #f1f5f9;
+        stroke-width: 2.8;
+    }
+
+    .circle {
+        fill: none;
+        stroke-width: 2.8;
+        stroke-linecap: round;
+        transition: stroke-dasharray 1s ease;
+    }
+
+    .circle.high { stroke: #22c55e; }
+    .circle.mid { stroke: #eab308; }
+    .circle.low { stroke: #ef4444; }
+
+    .percentage {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: #1e293b;
+    }
+
+    .match-meta h3 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin: 0 0 0.5rem;
+    }
+
+    .match-meta p {
+        font-size: 0.9rem;
+        color: #64748b;
+        margin: 0;
+        line-height: 1.5;
+    }
+
+    .detail-section {
+        margin-bottom: 1.5rem;
+    }
+
+    .detail-section h4 {
+        font-size: 0.85rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #475569;
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .dot { width: 8px; height: 8px; border-radius: 50%; }
+    .dot.green { background: #22c55e; }
+    .dot.red { background: #ef4444; }
+    .dot.purple { background: #a855f7; }
+    .dot.orange { background: #f97316; }
+
+    .skill-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    .skill-tag {
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 4px 10px;
+        border-radius: 4px;
+    }
+    .skill-tag.matched { background: #f0fdf4; color: #166534; border: 1px solid #dcfce7; }
+    .skill-tag.missing { background: #fef2f2; color: #991b1b; border: 1px solid #fee2e2; }
+
+    .strength-text { font-size: 0.9rem; color: #334155; line-height: 1.6; }
+    .tips-list { padding-left: 1.25rem; margin: 0; font-size: 0.9rem; color: #334155; }
+    .tips-list li { margin-bottom: 0.5rem; }
+
+    .locked-overlay {
+        position: absolute;
+        top: 100px;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        text-align: center;
+    }
+
+    .lock-content {
+        max-width: 400px;
+        background: rgba(255, 255, 255, 0.9);
+        padding: 2rem;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+        border: 1px solid #e2e8f0;
+    }
+
+    .lock-icon { font-size: 2.5rem; margin-bottom: 1rem; }
+    .lock-content h4 { font-size: 1.25rem; font-weight: 800; color: #1e293b; margin-bottom: 0.75rem; }
+    .lock-content p { font-size: 0.9rem; color: #64748b; margin-bottom: 1.5rem; }
+
+    .lock-actions { display: flex; flex-direction: column; gap: 0.75rem; }
+    .btn-unlock-primary {
+        background: var(--brand-primary);
+        color: white;
+        padding: 0.75rem;
+        border-radius: 4px;
+        font-weight: 700;
+        text-decoration: none;
+    }
+    .btn-unlock-outline {
+        background: transparent;
+        border: 1px solid var(--brand-primary);
+        color: var(--brand-primary);
+        padding: 0.75rem;
+        border-radius: 4px;
+        font-weight: 700;
+        text-decoration: none;
+    }
+</style>

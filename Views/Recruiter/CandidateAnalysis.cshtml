@@ -1,0 +1,95 @@
+@model AIResumeScreeningSystem.Models.Application
+@{
+    ViewData["Title"] = "Deep Candidate Analysis";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div style="max-width:900px; margin:0 auto; padding:2rem 1rem;">
+    <!-- Header -->
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:2rem;">
+        <div>
+            <a href="/Recruiter/Candidates?jobId=@Model.JobID" style="color:#64748B; text-decoration:none; font-size:0.875rem; font-weight:600; display:inline-block; margin-bottom:1rem;">&larr; Back to Candidates</a>
+            <h1 style="font-size:1.8rem; font-weight:900; color:#0F172A; margin:0;">Deep Candidate Analysis</h1>
+            <p style="color:#64748B; margin-top:0.5rem; font-size:1rem;">AI-powered strategic assessment for <strong>@Model.Applicant?.User?.FullName</strong> applying to <strong>@Model.Job?.JobTitle</strong>.</p>
+        </div>
+        <div style="text-align:right;">
+             <div style="display:inline-flex; align-items:center; justify-content:center; width:50px; height:50px; border-radius:50%; background:#EFF6FF; color:#3B82F6; font-size:1.5rem; font-weight:800; border:2px solid #BFDBFE;">
+                🧠
+             </div>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="r-card" style="padding:0; overflow:hidden;">
+        <!-- Loading State -->
+        <div id="loadingState" style="padding:4rem 2rem; text-align:center;">
+            <div style="width:50px; height:50px; border:4px solid #f1f5f9; border-top:4px solid #3B82F6; border-radius:50%; animation:spin 1s linear infinite; margin:0 auto 1.5rem auto;"></div>
+            <h3 style="color:#0F172A; font-weight:800; margin:0 0 0.5rem 0;">Analyzing Candidate Profile...</h3>
+            <p style="color:#64748B; font-size:0.95rem; max-width:400px; margin:0 auto;">Our AI is acting as a Senior Technical Recruiter. It is currently comparing the candidate's skills, experience, and academic background strictly against the job requirements to generate a brutally honest feasibility assessment. Please wait up to 10 seconds.</p>
+        </div>
+
+        <!-- Error State -->
+        <div id="errorState" style="display:none; padding:4rem 2rem; text-align:center;">
+            <div style="font-size:3rem; margin-bottom:1rem;">⚠️</div>
+            <h3 style="color:#b91c1c; font-weight:800; margin:0 0 0.5rem 0;">Analysis Failed</h3>
+            <p id="errorText" style="color:#64748B; font-size:0.95rem;">An error occurred while generating the deep analysis.</p>
+            <button onclick="fetchAnalysis()" class="r-btn r-btn-primary" style="margin-top:1rem;">Try Again</button>
+        </div>
+
+        <!-- Result State -->
+        <div id="resultState" style="display:none; padding:2.5rem; line-height:1.7;">
+            <div id="markdownContent" class="markdown-body"></div>
+        </div>
+    </div>
+</div>
+
+<style>
+@@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+/* Custom Markdown Styling */
+.markdown-body { font-family: 'Inter', system-ui, sans-serif; color: #1E293B; }
+.markdown-body h3 { font-size: 1.25rem; font-weight: 800; color: #0F172A; margin-top: 2rem; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid #E2E8F0; }
+.markdown-body h3:first-child { margin-top: 0; }
+.markdown-body p { margin-bottom: 1rem; font-size: 0.95rem; }
+.markdown-body ul { margin-bottom: 1.5rem; padding-left: 1.5rem; }
+.markdown-body li { margin-bottom: 0.5rem; font-size: 0.95rem; }
+.markdown-body strong { color: #0F172A; font-weight: 700; }
+</style>
+
+@section Scripts {
+    <!-- Include Marked.js for Markdown parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+        const appId = @ViewBag.ApplicationId;
+
+        function fetchAnalysis() {
+            document.getElementById('loadingState').style.display = 'block';
+            document.getElementById('errorState').style.display = 'none';
+            document.getElementById('resultState').style.display = 'none';
+
+            fetch(`/Recruiter/GenerateDeepAnalysisApi?applicationId=${appId}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('loadingState').style.display = 'none';
+                    if (data.success && data.data && !data.data.startsWith("Error")) {
+                        document.getElementById('resultState').style.display = 'block';
+                        // Parse Markdown to HTML
+                        document.getElementById('markdownContent').innerHTML = marked.parse(data.data);
+                    } else {
+                        document.getElementById('errorState').style.display = 'block';
+                        document.getElementById('errorText').innerText = data.data || "An unknown error occurred.";
+                    }
+                })
+                .catch(err => {
+                    document.getElementById('loadingState').style.display = 'none';
+                    document.getElementById('errorState').style.display = 'block';
+                    console.error("Analysis Error:", err);
+                });
+        }
+
+        // Fetch on load
+        document.addEventListener("DOMContentLoaded", () => {
+            fetchAnalysis();
+        });
+    </script>
+}

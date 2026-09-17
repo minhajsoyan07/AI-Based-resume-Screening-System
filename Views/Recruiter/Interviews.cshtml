@@ -1,0 +1,142 @@
+@model List<AIResumeScreeningSystem.Models.Interview>
+@{ 
+    ViewData["Title"] = "Interviews";
+    Layout = "~/Views/Shared/_RecruiterLayout.cshtml";
+}
+
+<div class="r-page-header-row">
+    <div>
+        <h1 style="font-size:1.75rem; font-weight:800; color:#1A202C; margin:0 0 0.25rem;">Interview Calendar</h1>
+        <p style="color:#777; margin:0; font-size:0.95rem;">Manage and conduct scheduled candidate evaluations</p>
+    </div>
+    <a href="/Recruiter/Candidates" class="r-btn r-btn-primary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        New Interview
+    </a>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="r-card" style="text-align:center; padding:5rem 2rem;">
+        <div style="font-size:4rem; margin-bottom:1.5rem;">📅</div>
+        <h3 style="font-size:1.25rem; font-weight:800; color:#1A202C; margin-bottom:0.5rem;">No Interviews Scheduled</h3>
+        <p style="color:#777; margin-bottom:2rem;">Your calendar is clear. Shortlist top candidates to begin scheduling.</p>
+        <a href="/Recruiter/Candidates" class="r-btn r-btn-secondary">Go to Candidates</a>
+    </div>
+}
+else
+{
+    <div style="display:grid; gap:1rem;">
+        @foreach (var i in Model)
+        {
+            var isUpcoming = i.InterviewDate >= DateTime.Today;
+            var isToday = i.InterviewDate == DateTime.Today;
+            
+            <div class="r-card @(!isUpcoming ? "r-card-dimmed" : "")" style="padding:1.25rem 1.5rem; display:flex; align-items:center; gap:1.5rem; @(isToday ? "border-left:4px solid #3B82F6;" : "")">
+                <!-- Date/Time Block -->
+                <div style="width:70px; text-align:center; flex-shrink:0; border-right:1px solid #F1F5F9; padding-right:1.5rem; margin-right:0.5rem;">
+                    <div style="font-size:0.75rem; font-weight:700; color:#94A3B8; text-transform:none;">@i.InterviewDate.ToString("MMM")</div>
+                    <div style="font-size:1.5rem; font-weight:900; color:#1E293B; line-height:1;">@i.InterviewDate.Day</div>
+                    <div style="font-size:0.7rem; font-weight:600; color:#3B82F6; margin-top:0.25rem;">@(DateTime.Today.Add(i.InterviewTime).ToString("h:mm tt"))</div>
+                </div>
+
+                <!-- Candidate & Job -->
+                <div style="flex:1; min-width:0;">
+                    <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.35rem;">
+                        <div style="width:32px; height:32px; border-radius:2px; background:#F1F5F9; color:#475569; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:0.75rem; flex-shrink:0;">
+                            @(i.Application?.Applicant?.User?.FullName.Substring(0, 1).ToUpper() ?? "C")
+                        </div>
+                        <h3 style="font-size:1rem; font-weight:800; color:#1E293B; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">@i.Application?.Applicant?.User?.FullName</h3>
+                        @if (isToday)
+                        {
+                            <span style="background:#DBEAFE; color:#1E40AF; padding:0.15rem 0.5rem; border-radius:2px; font-size:0.65rem; font-weight:800; text-transform:none;">Today</span>
+                        }
+                    </div>
+                    <div style="font-size:0.8rem; color:#64748B; display:flex; align-items:center; gap:0.5rem;">
+                        <span style="color:#94A3B8;">Applied for:</span>
+                        <span style="font-weight:600;">@i.Application?.Job?.JobTitle</span>
+                    </div>
+                </div>
+
+                <!-- Round & Type -->
+                <div style="width:140px; text-align:center; border-left:1px solid #F1F5F9; border-right:1px solid #F1F5F9; padding:0 1.5rem;">
+                    <div class="r-badge r-badge-gray" style="margin-bottom:0.25rem; font-size:0.7rem;">@i.InterviewType</div>
+                    <div style="font-size:0.75rem; color:#64748B; font-weight:600;">Round @i.InterviewRound</div>
+                </div>
+
+                <!-- Status & Action -->
+                <div style="width:200px; display:flex; flex-direction:column; align-items:flex-end; gap:0.75rem;">
+                    @{
+                        var statusColor = i.InterviewStatus switch {
+                            "Scheduled" => "#3B82F6",
+                            "Passed" => "#10B981",
+                            "Failed" => "#EF4444",
+                            _ => "#94A3B8"
+                        };
+                        var statusBg = i.InterviewStatus switch {
+                            "Scheduled" => "#EFF6FF",
+                            "Passed" => "#ECFDF5",
+                            "Failed" => "#FEF2F2",
+                            _ => "#F8FAFC"
+                        };
+                    }
+                    <div style="background:@statusBg; color:@statusColor; padding:0.25rem 0.75rem; border-radius:2px; font-size:0.75rem; font-weight:800; border:1px solid currentColor;">
+                        @i.InterviewStatus
+                    </div>
+                    
+                    <div style="display:flex; gap:0.5rem;">
+                        @if (i.InterviewStatus == "Scheduled")
+                        {
+                            <button onclick="handleStatus(@i.InterviewID, 'Passed')" class="r-btn" style="padding:0.4rem; background:#ECFDF5; color:#10B981; border:1px solid #A7F3D0;" title="Passed">✅</button>
+                            <button onclick="handleStatus(@i.InterviewID, 'Failed')" class="r-btn" style="padding:0.4rem; background:#FEF2F2; color:#EF4444; border:1px solid #FECACA;" title="Failed">❌</button>
+                        }
+                        @if (!string.IsNullOrEmpty(i.MeetingLink))
+                        {
+                            <a href="@i.MeetingLink" target="_blank" class="r-btn r-btn-primary" style="padding:0.4rem 1rem; font-size:0.75rem;">Join Call</a>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@section Scripts {
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+async function handleStatus(id, result) {
+    const { isConfirmed } = await Swal.fire({
+        title: `Mark as ${result}?`,
+        text: `This will update the candidate's interview status to ${result}.`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: result === 'Passed' ? '#10b981' : '#ef4444',
+        confirmButtonText: 'Yes, update it!'
+    });
+
+    if (isConfirmed) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/Recruiter/CompleteInterview';
+        
+        const iid = document.createElement('input');
+        iid.type = 'hidden'; iid.name = 'interviewId'; iid.value = id;
+        
+        const res = document.createElement('input');
+        res.type = 'hidden'; res.name = 'result'; res.value = result;
+
+        const token = document.createElement('input');
+        token.type = 'hidden'; token.name = '__RequestVerificationToken';
+        token.value = '@Html.AntiForgeryToken()'.match(/value="([^"]+)"/)[1];
+
+        form.appendChild(iid); form.appendChild(res); form.appendChild(token);
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+</script>
+}
+
+<style>
+.r-card-dimmed { opacity: 0.65; background: #F8FAFC; }
+</style>

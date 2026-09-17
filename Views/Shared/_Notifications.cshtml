@@ -1,0 +1,157 @@
+<div id="global-notifications" style="position: fixed; top: 80px; left: 50%; transform: translateX(-50%); z-index: 10000; display: flex; flex-direction: column; gap: 12px; pointer-events: none; align-items: center; width: 100%; max-width: 800px;">
+    @{
+        var successMsg = TempData["Success"]?.ToString() ?? ViewBag.Success?.ToString();
+        var errorMsg = TempData["Error"]?.ToString() ?? ViewBag.Error?.ToString() ?? ViewBag.ErrorMessage?.ToString();
+    }
+    @if (!string.IsNullOrEmpty(successMsg))
+    {
+        <div class="alert toast-notification success" style="pointer-events: auto;">
+            <div class="toast-icn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+            <div class="toast-msg">@successMsg</div>
+        </div>
+    }
+    @if (!string.IsNullOrEmpty(errorMsg))
+    {
+        <div class="alert toast-notification danger" style="pointer-events: auto;">
+            <div class="toast-icn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+            <div class="toast-msg">@errorMsg</div>
+        </div>
+    }
+</div>
+
+<style>
+    .toast-notification {
+        background: #ffffff;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        padding: 1.25rem 2rem;
+        border-radius: 8px;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        display: flex;
+        align-items: center;
+        gap: 0.85rem;
+        width: 100%;
+        max-width: 800px;
+        animation: toastIn 0.5s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .toast-notification:hover {
+        transform: scale(1.02);
+        background: rgba(255, 255, 255, 1);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
+
+    .toast-icn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border-radius:2px;
+        flex-shrink: 0;
+    }
+
+    .toast-msg {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #1a202c;
+        font-family: 'SolaimanLipi', 'Inter', sans-serif;
+        line-height: 1.2;
+    }
+
+    /* Success Theme */
+    .toast-notification.success {
+        border-left: 5px solid #10b981;
+    }
+    .toast-notification.success .toast-icn {
+        background: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+    }
+
+    /* Danger Theme */
+    .toast-notification.danger, .toast-notification.error {
+        border-left: 5px solid #ef4444;
+    }
+    .toast-notification.danger .toast-icn, .toast-notification.error .toast-icn {
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+    }
+
+    /* Info Theme */
+    .toast-notification.info {
+        border-left: 5px solid #3b82f6;
+    }
+    .toast-notification.info .toast-icn {
+        background: rgba(59, 130, 246, 0.1);
+        color: #3b82f6;
+    }
+
+    /* Warning Theme */
+    .toast-notification.warning {
+        border-left: 5px solid #f59e0b;
+    }
+    .toast-notification.warning .toast-icn {
+        background: rgba(245, 158, 11, 0.1);
+        color: #f59e0b;
+    }
+
+    @@keyframes toastIn {
+        from { transform: translateY(-20px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+
+    @@keyframes toastOut {
+        from { transform: translateY(0); opacity: 1; }
+        to { transform: translateY(-20px); opacity: 0; }
+    }
+</style>
+
+<script>
+    function showToast(message, type = 'success') {
+        const container = document.getElementById('global-notifications');
+        if (!container) return;
+
+        const toast = document.createElement('div');
+        toast.className = `alert toast-notification ${type}`;
+        
+        let icon = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>';
+        
+        if (type === 'danger' || type === 'error') {
+            icon = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
+        } else if (type === 'info') {
+            icon = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>';
+        } else if (type === 'warning') {
+            icon = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
+        }
+
+        toast.innerHTML = `
+            <div class="toast-icn">${icon}</div>
+            <div class="toast-msg">${message}</div>
+        `;
+
+        toast.onclick = () => removeToast(toast);
+        container.appendChild(toast);
+
+        setTimeout(() => removeToast(toast), 5000);
+    }
+
+    function removeToast(toast) {
+        toast.style.animation = 'toastOut 0.4s ease-in forwards';
+        setTimeout(() => {
+            if (toast.parentNode) toast.parentNode.removeChild(toast);
+        }, 400);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        console.log("ResuMatch Notifications system initialized");
+        const initialToasts = document.querySelectorAll('.toast-notification');
+        console.log("Initial toasts found:", initialToasts.length);
+        initialToasts.forEach(t => {
+            setTimeout(() => removeToast(t), 5000);
+            t.onclick = () => removeToast(t);
+        });
+    });
+</script>
